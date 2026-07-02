@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="刷题小程序">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#4f46e5">
+<meta name="description" content="刷题小程序 - 支持单选/多选/判断/填空/应用题，自定义分区和分值">
+<title>刷题小程序</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<!-- External libraries for file import (async, non-blocking) -->
+<script>
+// Load external scripts asynchronously - app works without them
+(function(){
+  var s1=document.createElement('script');
+  s1.src='https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+  s1.async=true;s1.onerror=function(){console.log('xlsx CDN unavailable');};
+  document.head.appendChild(s1);
+
+  var s2=document.createElement('script');
+  s2.src='https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+  s2.async=true;s2.onerror=function(){console.log('mammoth CDN unavailable');};
+  document.head.appendChild(s2);
+})();
+</script>
+<style>
+/* ============================================ */
+/* CSS Variables & Mobile-First Reset           */
+/* ============================================ */
+:root {
+  --primary: #4f46e5;
+  --primary-light: #6366f1;
+  --primary-bg: #eef2ff;
+  --primary-dark: #3730a3;
+  --success: #16a34a;
+  --success-bg: #dcfce7;
+  --success-light: #f0fdf4;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-light: #fef2f2;
+  --warning: #f59e0b;
+  --warning-bg: #fffbeb;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,.1);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,.12);
+  --transition: 0.2s ease;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --bottom-nav-h: 64px;
+  --header-h: 56px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--gray-50);
+  color:var(--gray-800);
+  height:100vh;
+  height:100dvh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-font-smoothing:antialiased;
+}
+input,textarea,select{
+  -webkit-user-select:text;
+  user-select:text;
+}
+button{
+  cursor:pointer;
+  font-family:inherit;
+  font-size:15px;
+  border:none;
+  border-radius:var(--radius-sm);
+  padding:12px 20px;
+  transition:all var(--transition);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  font-weight:500;
+  white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+button:active{opacity:.85}
+input,textarea,select{
+  font-family:inherit;
+  font-size:16px; /* Prevent iOS zoom on focus */
+  border:1.5px solid var(--gray-300);
+  border-radius:var(--radius-sm);
+  padding:12px 14px;
+  outline:none;
+  transition:border var(--transition);
+  width:100%;
+  background:#fff;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-bg)}
+textarea{resize:vertical;min-height:80px}
+select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+
+/* ============================================ */
+/* Top Header                                    */
+/* ============================================ */
+#app-header{
+  height:var(--header-h);
+  background:#fff;
+  border-bottom:1px solid var(--gray-200);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  gap:12px;
+  flex-shrink:0;
+  z-index:20;
+  padding-top:var(--safe-top);
+}
+#app-header .header-logo{
+  width:32px;height:32px;min-width:32px;
+  border-radius:8px;object-fit:cover;
+}
+#app-header h1{font-size:17px;font-weight:700;color:var(--gray-900)}
+#app-header .spacer{flex:1}
+#app-header .header-btn{
+  width:36px;height:36px;padding:0;
+  background:var(--gray-100);
+  border-radius:50%;
+  font-size:18px;
+  color:var(--gray-600);
+}
+#app-header .header-btn:hover{background:var(--gray-200)}
+
+/* PWA Install Banner */
+#install-banner{
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  padding:10px 12px;flex-shrink:0;
+  animation:slideDown .3s ease;
+}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.install-banner-inner{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.15);border-radius:12px;
+  padding:8px 12px;
+}
+.install-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0}
+.install-text{flex:1;min-width:0}
+.install-text strong{display:block;color:#fff;font-size:14px;font-weight:700}
+.install-text span{display:block;color:rgba(255,255,255,.8);font-size:12px}
+.install-banner-inner .btn-primary{
+  background:#fff;color:var(--primary);padding:8px 16px;
+  font-size:14px;font-weight:700;border-radius:20px;
+  flex-shrink:0;
+}
+.install-close{
+  background:none;border:none;color:rgba(255,255,255,.7);
+  font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;
+}
+@media(min-width:768px){
+  #install-banner{max-width:800px;margin:0 auto;border-radius:0 0 16px 16px}
+}
+
+/* ============================================ */
+/* Main Content Area                             */
+/* ============================================ */
+#main-content{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:16px;
+  padding-bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 16px);
+}
+/* ============================================ */
+/* Bottom Navigation                             */
+/* ============================================ */
+#bottom-nav{
+  height:calc(var(--bottom-nav-h) + var(--safe-bottom));
+  padding-bottom:var(--safe-bottom);
+  background:#fff;
+  border-top:1px solid var(--gray-200);
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+  flex-shrink:0;
+  z-index:20;
+  box-shadow:0 -2px 10px rgba(0,0,0,.04);
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 12px;
+  background:none;border:none;
+  color:var(--gray-400);font-size:11px;font-weight:500;
+  transition:all var(--transition);
+  min-width:64px;
+}
+.nav-item .nav-icon{font-size:22px;transition:all var(--transition)}
+.nav-item.active{color:var(--primary)}
+.nav-item.active .nav-icon{transform:scale(1.1)}
+
+/* ============================================ */
+/* Section Drawer (slides up from bottom)        */
+/* ============================================ */
+.drawer-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:50;display:flex;align-items:flex-end;
+  animation:fadeIn .2s ease;
+}
+.drawer{
+  background:#fff;
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  width:100%;max-height:70vh;max-height:70dvh;
+  display:flex;flex-direction:column;
+  animation:slideUp .25s ease;
+  padding-bottom:var(--safe-bottom);
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.drawer-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid var(--gray-200);
+}
+.drawer-header h3{font-size:17px;font-weight:700}
+.drawer-handle{
+  width:36px;height:4px;background:var(--gray-300);
+  border-radius:2px;margin:10px auto 0;
+}
+.drawer-body{flex:1;overflow-y:auto;padding:8px 0}
+.section-item-m{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 20px;
+  cursor:pointer;transition:all var(--transition);
+  border:none;background:none;width:100%;text-align:left;
+  font-size:15px;color:var(--gray-700);
+  border-left:3px solid transparent;
+}
+.section-item-m:hover{background:var(--gray-50)}
+.section-item-m.active{background:var(--primary-bg);color:var(--primary);font-weight:600;border-left-color:var(--primary)}
+.section-item-m .s-icon{font-size:20px}
+.section-item-m .s-name{flex:1}
+.section-item-m .s-count{font-size:13px;color:var(--gray-400);background:var(--gray-100);padding:2px 10px;border-radius:10px}
+.section-item-m.active .s-count{background:var(--primary-light);color:#fff}
+.section-item-m .s-actions{display:flex;gap:2px}
+.section-item-m .s-actions button{
+  padding:6px;font-size:14px;background:transparent;border-radius:50%;
+  width:32px;height:32px;
+}
+.drawer-footer{padding:12px 16px;border-top:1px solid var(--gray-200);display:flex;gap:8px}
+.drawer-footer button{flex:1;font-size:14px;padding:10px}
+
+/* ============================================ */
+/* Question Cards (Bank View)                    */
+/* ============================================ */
+.bank-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;flex-wrap:wrap;gap:8px;
+}
+.bank-header h2{font-size:18px;font-weight:700}
+.bank-header .info{font-size:13px;color:var(--gray-500)}
+.question-card-m{
+  background:#fff;border-radius:var(--radius);padding:14px 16px;
+  margin-bottom:10px;box-shadow:var(--shadow);
+  border-left:4px solid transparent;
+  position:relative;
+  transition:all var(--transition);
+}
+.question-card-m:active{transform:scale(.98)}
+.question-card-m.type-single{border-left-color:#6366f1}
+.question-card-m.type-multiple{border-left-color:#8b5cf6}
+.question-card-m.type-truefalse{border-left-color:#f59e0b}
+.question-card-m.type-fillblank{border-left-color:#10b981}
+.question-card-m.type-essay{border-left-color:#ec4899}
+.question-card-m .q-top{display:flex;align-items:flex-start;gap:8px}
+.question-card-m .q-title{flex:1;font-size:14px;font-weight:500;line-height:1.5}
+.q-type-badge{
+  font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap;
+  flex-shrink:0;
+}
+.q-type-badge.single{background:#eef2ff;color:#4f46e5}
+.q-type-badge.multiple{background:#f3e8ff;color:#7c3aed}
+.q-type-badge.truefalse{background:#fffbeb;color:#d97706}
+.q-type-badge.fillblank{background:#ecfdf5;color:#059669}
+.q-type-badge.essay{background:#fdf2f8;color:#db2777}
+.question-card-m .q-options{
+  margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;
+}
+.question-card-m .q-option-tag{
+  font-size:12px;padding:3px 10px;background:var(--gray-50);
+  border-radius:12px;color:var(--gray-600);
+}
+.question-card-m .q-option-tag.correct{background:var(--success-bg);color:var(--success);font-weight:600}
+.question-card-m .q-footer{
+  margin-top:8px;font-size:12px;color:var(--gray-500);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.question-card-m .q-footer .ans{font-weight:600;color:var(--gray-700)}
+.question-card-m .q-actions{margin-left:auto;display:flex;gap:2px}
+.question-card-m .q-actions button{
+  padding:5px 10px;font-size:12px;background:var(--gray-50);color:var(--gray-500);
+  border-radius:var(--radius-sm);
+}
+.question-card-m .q-actions button:active{background:var(--gray-200)}
+
+/* FAB */
+#fab{
+  position:fixed;bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + 20px);
+  right:20px;
+  width:52px;height:52px;border-radius:50%;
+  background:var(--primary);color:#fff;font-size:26px;
+  box-shadow:0 4px 16px rgba(79,70,229,.4);
+  z-index:30;padding:0;
+  display:flex;align-items:center;justify-content:center;
+}
+#fab:active{background:var(--primary-dark);transform:scale(.9)}
+
+/* ============================================ */
+/* Quiz View (Mobile)                            */
+/* ============================================ */
+.quiz-setup-m{
+  background:#fff;border-radius:var(--radius-lg);padding:24px 20px;
+  box-shadow:var(--shadow-md);
+}
+.quiz-setup-m h2{font-size:20px;margin-bottom:4px}
+.quiz-setup-m .desc{color:var(--gray-500);font-size:14px;margin-bottom:20px}
+.quiz-setup-m .form-group{margin-bottom:16px}
+.quiz-setup-m label{display:block;font-size:14px;font-weight:600;margin-bottom:6px;color:var(--gray-700)}
+.section-chips{display:flex;flex-wrap:wrap;gap:8px}
+.section-chip{
+  padding:10px 16px;border:1.5px solid var(--gray-300);
+  border-radius:20px;font-size:14px;cursor:pointer;
+  transition:all var(--transition);background:#fff;
+  display:flex;align-items:center;gap:4px;
+}
+.section-chip:active{transform:scale(.96)}
+.section-chip.checked{background:var(--primary-bg);border-color:var(--primary);color:var(--primary);font-weight:600}
+.section-chip input{display:none}
+.btn-full{padding:16px;font-size:17px;font-weight:600;width:100%;border-radius:var(--radius)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:active{background:var(--primary-dark)}
+.btn-outline{background:#fff;border:1.5px solid var(--gray-300);color:var(--gray-700)}
+.btn-outline:active{background:var(--gray-50)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:active{background:#15803d}
+.btn-danger-outline{background:#fff;color:var(--danger);border:1.5px solid #fecaca}
+.btn-danger-outline:active{background:var(--danger-bg)}
+
+/* Quiz Progress */
+.quiz-progress-m{
+  display:flex;align-items:center;gap:12px;
+  background:#fff;border-radius:var(--radius);padding:12px 16px;
+  box-shadow:var(--shadow);margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.quiz-progress-m .counter{font-size:14px;font-weight:600;white-space:nowrap}
+.quiz-progress-m .pbar{flex:1;min-width:60px;height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden}
+.quiz-progress-m .pfill{height:100%;background:var(--primary);transition:width .3s;border-radius:3px}
+.quiz-progress-m .score-mini{font-size:13px;font-weight:600;color:var(--success)}
+
+/* Quiz Question */
+.quiz-card-m{
+  background:#fff;border-radius:var(--radius-lg);padding:24px 20px;
+  box-shadow:var(--shadow-md);
+  transition:all .3s ease;
+  touch-action:auto;
+}
+.quiz-card-m.correct{border:2px solid var(--success);box-shadow:0 0 0 6px var(--success-bg)}
+.quiz-card-m.wrong{border:2px solid var(--danger);box-shadow:0 0 0 6px var(--danger-bg)}
+.quiz-card-m .q-type-label{font-size:12px;color:var(--gray-500);margin-bottom:6px}
+.quiz-card-m .q-text{font-size:17px;font-weight:600;line-height:1.6;margin-bottom:20px;color:var(--gray-900)}
+.quiz-option-m{
+  display:block;width:100%;text-align:left;
+  padding:16px 18px;margin-bottom:8px;
+  background:var(--gray-50);
+  border:2px solid var(--gray-200);
+  border-radius:var(--radius);
+  font-size:16px;color:var(--gray-700);
+  transition:all var(--transition);
+}
+.quiz-option-m:active{opacity:.9}
+.quiz-option-m.selected{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);font-weight:600}
+.quiz-option-m.correct-answer{border-color:var(--success)!important;background:var(--success-bg)!important;color:var(--success)!important;font-weight:600}
+.quiz-option-m.wrong-answer{border-color:var(--danger)!important;background:var(--danger-bg)!important;color:var(--danger)!important}
+.quiz-option-m:disabled{opacity:.8}
+.quiz-input-m{
+  padding:16px 18px;font-size:17px;
+  border:2px solid var(--gray-300);border-radius:var(--radius);
+  width:100%;margin-bottom:12px;text-align:center;
+}
+.quiz-input-m.correct{border-color:var(--success);background:var(--success-light)}
+.quiz-input-m.wrong{border-color:var(--danger);background:var(--danger-light)}
+.quiz-feedback-m{
+  margin-top:14px;padding:14px 16px;border-radius:var(--radius);font-size:14px;line-height:1.5;
+  animation:fadeIn .3s ease;
+}
+.quiz-feedback-m.correct{background:var(--success-bg);color:#166534;border:1px solid #bbf7d0}
+.quiz-feedback-m.wrong{background:var(--danger-bg);color:#991b1b;border:1px solid #fecaca}
+.quiz-feedback-m .ans-label{font-weight:700;margin-top:4px}
+.quiz-nav-m{display:flex;gap:10px;margin-top:16px}
+.quiz-nav-m button{flex:1;padding:14px;font-size:15px}
+
+/* Swipe hint */
+.swipe-hint{
+  text-align:center;color:var(--gray-400);font-size:12px;
+  margin-top:12px;display:flex;align-items:center;justify-content:center;gap:4px;
+}
+
+/* ============================================ */
+/* Quiz Result                                   */
+/* ============================================ */
+.result-card{
+  background:#fff;border-radius:var(--radius-lg);padding:32px 20px;
+  box-shadow:var(--shadow-md);text-align:center;
+}
+.score-ring{
+  width:130px;height:130px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  margin:0 auto 20px;border:6px solid var(--primary);
+}
+.score-ring.excellent{border-color:var(--success);color:var(--success)}
+.score-ring.good{border-color:var(--primary);color:var(--primary)}
+.score-ring.fair{border-color:var(--warning);color:var(--warning)}
+.score-ring.poor{border-color:var(--danger);color:var(--danger)}
+.score-ring .big{font-size:42px;font-weight:800;line-height:1}
+.score-ring .small{font-size:12px;color:var(--gray-500)}
+.result-details{text-align:left;margin:16px 0}
+.result-details .row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:14px}
+.result-item{
+  padding:12px;border-radius:var(--radius-sm);margin-bottom:6px;text-align:left;
+  display:flex;align-items:flex-start;gap:8px;font-size:13px;
+}
+.result-item .r-icon{font-size:18px;flex-shrink:0}
+
+/* ============================================ */
+/* Modal (Full-screen on mobile)                 */
+/* ============================================ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:100;display:flex;align-items:flex-end;
+  animation:fadeIn .2s ease;
+}
+.modal{
+  background:#fff;border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  width:100%;max-height:90vh;max-height:90dvh;
+  overflow-y:auto;padding:24px 20px;
+  animation:slideUp .25s ease;
+  padding-bottom:calc(24px + var(--safe-bottom));
+}
+.modal h3{font-size:19px;font-weight:700;margin-bottom:18px}
+.modal .form-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.modal .form-row>*{flex:1;min-width:100px}
+.modal label{display:block;font-size:13px;font-weight:600;margin-bottom:4px;color:var(--gray-700)}
+.modal .form-group{margin-bottom:14px}
+.option-row-m{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.option-row-m .letter{font-weight:700;color:var(--primary);width:22px;font-size:14px}
+.option-row-m input{flex:1}
+.option-row-m .del-btn{
+  padding:8px;font-size:16px;background:transparent;color:var(--gray-400);
+  border-radius:50%;width:36px;height:36px;
+}
+.option-row-m .del-btn:active{background:var(--danger-bg);color:var(--danger)}
+.modal-footer{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-200)}
+.modal-footer button{flex:1;padding:14px;font-size:16px}
+.answer-chips{display:flex;flex-wrap:wrap;gap:6px}
+.answer-chip{
+  padding:8px 16px;border:2px solid var(--gray-300);border-radius:20px;
+  font-size:14px;cursor:pointer;transition:all var(--transition);background:#fff;
+}
+.answer-chip:active{transform:scale(.95)}
+.answer-chip.selected{background:var(--primary-bg);border-color:var(--primary);color:var(--primary);font-weight:600}
+
+/* Import tabs */
+.import-tabs-m{display:flex;gap:0;margin-bottom:14px;background:var(--gray-100);border-radius:var(--radius-sm);padding:3px}
+.import-tab-m{
+  flex:1;padding:10px;font-size:14px;text-align:center;border-radius:6px;
+  background:none;color:var(--gray-500);font-weight:500;
+}
+.import-tab-m.active{background:#fff;color:var(--primary);font-weight:600;box-shadow:var(--shadow)}
+.import-textarea-m{width:100%;min-height:200px;font-size:14px;font-family:monospace;border-radius:var(--radius)}
+
+/* Toast */
+#toast{
+  position:fixed;top:calc(16px + var(--safe-top));left:50%;transform:translateX(-50%);
+  padding:12px 24px;border-radius:20px;font-size:14px;font-weight:500;
+  z-index:200;animation:fadeIn .3s ease;pointer-events:none;
+  box-shadow:var(--shadow-lg);
+}
+.toast-success{background:#166534;color:#fff}
+.toast-error{background:#991b1b;color:#fff}
+.toast-info{background:var(--primary);color:#fff}
+
+/* Confirm dialog */
+.confirm-overlay{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:150;
+  padding:20px;
+}
+.confirm-bg{position:absolute;inset:0;background:rgba(0,0,0,.4)}
+.confirm-box{
+  position:relative;background:#fff;padding:24px;
+  border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);
+  max-width:320px;width:100%;
+}
+.confirm-box h4{font-size:17px;margin-bottom:6px}
+.confirm-box p{color:var(--gray-600);font-size:14px;margin-bottom:18px}
+.confirm-box .btns{display:flex;gap:8px}
+.confirm-box .btns button{flex:1}
+
+/* Empty state */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 20px;color:var(--gray-400);gap:10px;text-align:center;
+}
+.empty-state .icon{font-size:56px}
+.empty-state p{font-size:15px}
+
+/* Utility */
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.text-sm{font-size:13px;color:var(--gray-500)}
+.mt-2{margin-top:8px}
+.mt-4{margin-top:16px}
+.mb-2{margin-bottom:8px}
+.mb-4{margin-bottom:16px}
+.gap-2{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Desktop tweaks */
+@media(min-width:768px){
+  #main-content{max-width:800px;margin:0 auto;padding:24px}
+  .modal{border-radius:var(--radius-lg);max-width:600px;margin:auto;
+    position:relative;top:50%;transform:translateY(-50%);max-height:85vh}
+  .modal-overlay{align-items:center}
+  .drawer{max-width:400px;border-radius:var(--radius-lg)}
+  .drawer-overlay{align-items:center;justify-content:center}
+}
+</style>
+</head>
+<body>
+<!-- DEBUG PANEL -->
+<div id="debug-panel" style="position:fixed;bottom:80px;left:8px;right:8px;background:#111;color:#0f0;padding:10px;border-radius:10px;z-index:999;font-size:11px;font-family:monospace;max-height:200px;overflow-y:auto;display:none">
+  <div id="debug-msgs"></div>
+  <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:red;color:#fff;border:none;padding:4px 12px;border-radius:12px;font-size:12px;margin-top:6px">关闭调试</button>
+</div>
+
+<!-- ============================================ -->
+<!-- PWA INSTALL BANNER                            -->
+<!-- ============================================ -->
+<div id="install-banner" style="display:none">
+  <div class="install-banner-inner">
+    <img src="icons/icon-192.png" alt="" class="install-icon">
+    <div class="install-text">
+      <strong>刷题小程序</strong>
+      <span>添加到桌面，像App一样使用</span>
+    </div>
+    <button class="btn-primary" id="install-btn" onclick="App.installPWA()">📲 安装</button>
+    <button class="install-close" onclick="App.dismissInstall()">✕</button>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- TOP HEADER                                   -->
+<!-- ============================================ -->
+<div id="app-header">
+  <img src="icons/icon-192.png" alt="刷题小程序" class="header-logo">
+  <h1 id="header-title">题库管理</h1>
+  <span class="spacer"></span>
+  <button class="header-btn" onclick="App.showSectionDrawer()" title="分区">📁</button>
+</div>
+
+<!-- ============================================ -->
+<!-- MAIN CONTENT                                 -->
+<!-- ============================================ -->
+<div id="main-content"></div>
+
+<!-- ============================================ -->
+<!-- FAB (Add Question)                           -->
+<!-- ============================================ -->
+<button id="fab" onclick="App.showAddQuestionModal()" title="添加题目">+</button>
+
+<!-- ============================================ -->
+<!-- BOTTOM NAV                                   -->
+<!-- ============================================ -->
+<nav id="bottom-nav">
+  <button class="nav-item active" data-tab="bank" onclick="App.switchTab('bank')">
+    <span class="nav-icon">📋</span>题库
+  </button>
+  <button class="nav-item" data-tab="quiz" onclick="App.switchTab('quiz')">
+    <span class="nav-icon">🎯</span>刷题
+  </button>
+  <button class="nav-item" data-tab="stats" onclick="App.switchTab('stats')">
+    <span class="nav-icon">📊</span>统计
+  </button>
+</nav>
+
+<!-- ============================================ -->
+<!-- TOAST                                        -->
+<!-- ============================================ -->
+<div id="toast" style="display:none"></div>
+<input type="file" id="file-input" accept=".json,.xlsx,.xls,.csv,.docx,.txt" style="display:none">
+
+<script>
+// ==============================================
+// DATA LAYER
+// ==============================================
+const STORAGE_KEY = 'quiz_app_mobile_v1';
+
+const DataManager = {
+  load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        return { sections: data.sections || [], questions: data.questions || [] };
+      }
+    } catch(e){}
+    return { sections: [], questions: [] };
+  },
+  save(sections, questions) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ sections, questions }));
+    } catch(e) { App.toast('保存失败，存储空间不足！', 'error'); }
+  },
+  uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2,9); },
+
+  async exportJSON(sections, questions) {
+    const data = JSON.stringify({ sections, questions }, null, 2);
+    const fileName = `quiz-backup-${new Date().toISOString().slice(0,10)}.json`;
+    // Electron native dialog
+    if (window.electronAPI && window.electronAPI.isElectron) {
+      await window.electronAPI.saveFile({ content: data, defaultName: fileName });
+      App.toast('导出成功！', 'success');
+      return;
+    }
+    // Browser fallback
+    const blob = new Blob([data], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName; a.click();
+    URL.revokeObjectURL(url);
+    App.toast('导出成功！', 'success');
+  },
+
+  importJSON(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (data.sections && data.questions) resolve(data);
+          else reject(new Error('格式不正确'));
+        } catch(err) { reject(err); }
+      };
+      reader.readAsText(file);
+    });
+  }
+};
+
+// ==============================================
+// QUESTION PARSER
+// ==============================================
+const QuestionParser = {
+  parse(text, sectionId) {
+    const questions = [];
+    const blocks = this._splitBlocks(text);
+    for (const block of blocks) {
+      const q = this._parseBlock(block, sectionId);
+      if (q && q.title.trim()) questions.push(q);
+    }
+    return questions;
+  },
+  _splitBlocks(text) {
+    const lines = text.split(/\n/);
+    const blocks = []; let current = [];
+    for (const line of lines) {
+      const t = line.trim();
+      if (/^(\d+)[\.\、\)）]\s*/.test(t) || /^第\d+题/.test(t)) {
+        if (current.length > 0) blocks.push(current.join('\n'));
+        current = [line];
+      } else if (current.length > 0) { current.push(line); }
+    }
+    if (current.length > 0) blocks.push(current.join('\n'));
+    if (blocks.length === 0 && text.trim()) blocks.push(text);
+    return blocks;
+  },
+  _parseBlock(block, sectionId) {
+    const lines = block.split(/\n/).map(l => l.trim()).filter(l => l);
+    if (!lines.length) return null;
+
+    let title = '', options = [], answer = '', points = 5, type = 'single', explanation = '';
+    const first = lines[0];
+
+    // Detect type
+    if (/单选题|单选/.test(first)) type = 'single';
+    else if (/多选题|多选/.test(first)) type = 'multiple';
+    else if (/判断题|判断/.test(first)) type = 'truefalse';
+    else if (/填空题|填空/.test(first)) type = 'fillblank';
+    else if (/应用题|简答|问答/.test(first)) type = 'essay';
+
+    title = first.replace(/^(\d+)[\.\、\)）]\s*/, '').replace(/[（(](单选题|多选题|判断题|填空题|应用题|单选|多选)[)）]\s*/g, '').trim();
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      const optMatch = line.match(/^([A-Da-d])[\.\、\)）]\s*(.+)/);
+      if (optMatch && type !== 'fillblank' && type !== 'essay') {
+        options.push(optMatch[2].trim()); continue;
+      }
+      const ansMatch = line.match(/^(?:答案|正确答案)[：:]\s*(.+)/);
+      if (ansMatch) { answer = ansMatch[1].trim(); continue; }
+      if (type === 'truefalse' && /[√✓对]/.test(line)) { answer = '对'; continue; }
+      if (type === 'truefalse' && /[×✗✘错]/.test(line)) { answer = '错'; continue; }
+      const checkMark = line.match(/^([A-Da-d])[\.\、\)）]\s*(.+?)\s*[✓✔]\s*$/);
+      if (checkMark && type !== 'fillblank' && type !== 'essay') {
+        options.push(checkMark[2].trim());
+        if (!answer) answer = checkMark[1].toUpperCase();
+        continue;
+      }
+      const ptsMatch = line.match(/^(?:分值|分数|每题)[：:]\s*(\d+)/);
+      if (ptsMatch) { points = parseInt(ptsMatch[1]) || 5; continue; }
+      const expMatch = line.match(/^(?:解析|解释|说明)[：:]\s*(.+)/);
+      if (expMatch) { explanation = expMatch[1].trim(); continue; }
+    }
+
+    // Normalize answer
+    if ((type === 'single' || type === 'multiple') && answer && /^[A-Da-d]$/.test(answer)) {
+      const idx = answer.toUpperCase().charCodeAt(0) - 65;
+      if (idx >= 0 && idx < options.length) answer = options[idx];
+    }
+    if (type === 'truefalse') {
+      if (/[√✓✔对正确]/.test(answer)) answer = '对';
+      if (/[×✗✘错错误]/.test(answer)) answer = '错';
+    }
+    return { id: DataManager.uid(), sectionId, type, title,
+      options: options.length > 0 ? options : (type === 'truefalse' ? ['对','错'] : []),
+      answer, points, explanation };
+  }
+};
+
+// ==============================================
+// APPLICATION
+// ==============================================
+const App = {
+  sections: [], questions: [], activeSectionId: null, activeTab: 'bank',
+  // Quiz state
+  quizQuestions: [], quizIndex: 0, quizAnswers: {}, quizAnswered: false, quizSubmitted: false,
+  // Modal state
+  _modalData: {}, _parsedQuestions: [], _lastResult: null,
+  // Stats
+  quizHistory: [],
+
+  // ============================================
+  // INIT
+  // ============================================
+  init() {
+    const data = DataManager.load();
+    this.sections = data.sections;
+    this.questions = data.questions;
+    this.quizHistory = JSON.parse(localStorage.getItem('quiz_history') || '[]');
+
+    if (this.sections.length === 0) {
+      this.sections.push({ id: DataManager.uid(), name: '默认分区', createdAt: new Date().toISOString() });
+      this._save();
+    }
+    this.activeSectionId = this.sections[0].id;
+    this._render();
+    this._bindEvents();
+    this._registerSW();
+  },
+
+  _save() { DataManager.save(this.sections, this.questions); },
+  _saveHistory() { localStorage.setItem('quiz_history', JSON.stringify(this.quizHistory.slice(-50))); },
+
+  _registerSW() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  },
+
+  // ============================================
+  // RENDER
+  // ============================================
+  _render() {
+    this._renderMain();
+    this._updateFAB();
+    this._updateNav();
+    this._updateHeader();
+  },
+
+  _updateHeader() {
+    const titles = { bank: '题库管理', quiz: '开始刷题', stats: '学习统计' };
+    document.getElementById('header-title').textContent = titles[this.activeTab] || '刷题小程序';
+  },
+
+  _updateNav() {
+    document.querySelectorAll('#bottom-nav .nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.tab === this.activeTab);
+    });
+  },
+
+  _updateFAB() {
+    const fab = document.getElementById('fab');
+    fab.style.display = this.activeTab === 'bank' ? 'flex' : 'none';
+  },
+
+  _renderMain() {
+    const container = document.getElementById('main-content');
+    switch (this.activeTab) {
+      case 'bank': this._renderBank(container); break;
+      case 'quiz': this._renderQuiz(container); break;
+      case 'stats': this._renderStats(container); break;
+    }
+  },
+
+  _renderBank(container) {
+    const section = this.sections.find(s => s.id === this.activeSectionId);
+    if (!section) { container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>请选择分区</p></div>`; return; }
+    const questions = this.questions.filter(q => q.sectionId === this.activeSectionId);
+    const typeLabels = { single:'单选题', multiple:'多选题', truefalse:'判断题', fillblank:'填空题', essay:'应用题' };
+
+    container.innerHTML = `
+      <div class="bank-header">
+        <div>
+          <h2>📁 ${esc(section.name)}</h2>
+          <div class="info">${questions.length} 道题目</div>
+        </div>
+        <button class="btn-outline" style="padding:8px 14px;font-size:13px" onclick="App.showImportModal()">📥 导入</button>
+      </div>
+      <input type="text" placeholder="🔍 搜索题目..." id="bank-search"
+             style="margin-bottom:12px;padding:10px 14px;font-size:14px;border-radius:20px"
+             oninput="App._filterBank()">
+      <div id="question-list">
+        ${questions.length === 0 ? `
+          <div class="empty-state"><div class="icon">📝</div><p>此分区还没有题目</p><button class="btn-primary" onclick="App.showAddQuestionModal()">➕ 添加第一道题目</button></div>
+        ` : questions.map(q => this._renderQuestionCard(q, typeLabels)).join('')}
+      </div>
+    `;
+  },
+
+  _renderQuestionCard(q, labels) {
+    const letters = 'ABCDEFGH';
+    let optsHtml = '';
+    if (q.options && q.options.length > 0) {
+      optsHtml = `<div class="q-options">${q.options.map((o,i) => {
+        const isCorrect = q.answer && (Array.isArray(q.answer) ? q.answer.includes(o) : q.answer === o);
+        return `<span class="q-option-tag${isCorrect?' correct':''}">${letters[i]}. ${esc(o)}</span>`;
+      }).join('')}</div>`;
+    }
+    let ansDisplay = q.answer || '未设置';
+    if (Array.isArray(ansDisplay)) ansDisplay = ansDisplay.join('、');
+
+    return `
+      <div class="question-card-m type-${q.type}">
+        <div class="q-top">
+          <div class="q-title">${esc(q.title)}</div>
+          <span class="q-type-badge ${q.type}">${labels[q.type]}</span>
+        </div>
+        ${optsHtml}
+        <div class="q-footer">
+          <span>答案：<span class="ans">${esc(ansDisplay)}</span></span>
+          <span>${q.points}分</span>
+          ${q.explanation ? `<span>💡${esc(q.explanation).substring(0,30)}...</span>` : ''}
+          <span class="q-actions">
+            <button onclick="App.editQuestion('${q.id}')">✏️</button>
+            <button onclick="App.deleteQuestion('${q.id}')">🗑️</button>
+          </span>
+        </div>
+      </div>
+    `;
+  },
+
+  _filterBank() {
+    const search = (document.getElementById('bank-search')?.value || '').toLowerCase();
+    document.querySelectorAll('#question-list .question-card-m').forEach(card => {
+      card.style.display = (card.textContent || '').toLowerCase().includes(search) ? '' : 'none';
+    });
+  },
+
+  // ============================================
+  // QUIZ VIEW
+  // ============================================
+  _renderQuiz(container) {
+    if (this.quizQuestions.length === 0 || this.quizSubmitted) {
+      this._renderQuizSetup(container);
+    } else {
+      this._renderQuizQuestion(container);
+    }
+  },
+
+  _renderQuizSetup(container) {
+    const withQ = this.sections.filter(s => this.questions.some(q => q.sectionId === s.id));
+    if (!withQ.length) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>还没有题目，请先添加题目</p><button class="btn-primary" onclick="App.switchTab('bank')">前往题库</button></div>`;
+      return;
+    }
+    // Last result
+    let lastHtml = '';
+    if (this._lastResult) {
+      const r = this._lastResult;
+      const pct = r.totalPoints > 0 ? Math.round((r.score / r.totalPoints) * 100) : 0;
+      const grade = pct >= 90 ? 'excellent' : pct >= 75 ? 'good' : pct >= 60 ? 'fair' : 'poor';
+      const gradeText = pct >= 90 ? '🌟 优秀' : pct >= 75 ? '👍 良好' : pct >= 60 ? '📚 及格' : '💪 继续努力';
+      lastHtml = `
+        <div style="text-align:center;padding:16px;background:var(--gray-50);border-radius:var(--radius);margin-bottom:20px">
+          <div style="font-size:36px;font-weight:800;color:var(--${grade==='excellent'?'success':grade==='good'?'primary':grade==='fair'?'warning':'danger'})">${r.score}<span style="font-size:18px;color:var(--gray-500)">/${r.totalPoints}</span></div>
+          <div style="font-size:15px;font-weight:600">${gradeText} · ${pct}%</div>
+          <div style="font-size:12px;color:var(--gray-500)">${r.correct}/${r.total} 正确</div>
+        </div>
+      `;
+    }
+    container.innerHTML = `
+      <div class="quiz-setup-m">
+        <h2>🎯 开始刷题</h2>
+        <p class="desc">选择分区，开始答题</p>
+        ${lastHtml}
+        <div class="form-group">
+          <label>选择分区（可多选）</label>
+          <div class="section-chips" id="quiz-sections">
+            ${withQ.map(s => {
+              const n = this.questions.filter(q => q.sectionId === s.id).length;
+              return `<label class="section-chip checked"><input type="checkbox" checked value="${s.id}">${esc(s.name)} (${n})</label>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>题目数量（0=全部）</label><input type="number" id="quiz-limit" value="0" min="0"></div>
+        </div>
+        <button class="btn-primary btn-full" onclick="App.startQuiz()">🚀 开始答题</button>
+      </div>
+    `;
+    // Bind chips
+    document.getElementById('quiz-sections')?.addEventListener('click', e => {
+      const chip = e.target.closest('.section-chip');
+      if (chip) {
+        const cb = chip.querySelector('input');
+        cb.checked = !cb.checked;
+        chip.classList.toggle('checked', cb.checked);
+      }
+    });
+  },
+
+  _renderQuizQuestion(container) {
+    if (!container) container = document.getElementById('main-content');
+    const q = this.quizQuestions[this.quizIndex];
+    if (!q) return;
+    const total = this.quizQuestions.length;
+    const current = this.quizIndex + 1;
+    const userAnswer = this.quizAnswers[q.id];
+    const answered = userAnswer !== undefined;
+    const typeLabels = { single:'单选题', multiple:'多选题', truefalse:'判断题', fillblank:'填空题', essay:'应用题' };
+
+    let feedbackHtml = '';
+    if (this.quizAnswered) {
+      const isCorrect = this._checkAnswer(q, userAnswer);
+      feedbackHtml = `
+        <div class="quiz-feedback-m ${isCorrect?'correct':'wrong'}">
+          ${isCorrect ? '✅ 回答正确！' : '❌ 回答错误！'}
+          <div class="ans-label">正确答案：${esc(Array.isArray(q.answer) ? q.answer.join('、') : q.answer)}</div>
+          ${q.explanation ? `<div style="margin-top:4px">💡 ${esc(q.explanation)}</div>` : ''}
+        </div>
+      `;
+    }
+
+    let inputHtml = '';
+    if (!this.quizAnswered) {
+      if (q.type === 'fillblank' || q.type === 'essay') {
+        inputHtml = `
+          <input type="text" class="quiz-input-m" id="quiz-input"
+                 placeholder="${q.type==='essay'?'请输入答案...':'请输入填空答案...'}"
+                 onkeydown="if(event.key==='Enter')App.submitTextAnswer()">
+          <button class="btn-primary btn-full" onclick="App.submitTextAnswer()">✅ 提交答案</button>
+        `;
+      } else if (q.type === 'truefalse') {
+        inputHtml = `
+          <button class="quiz-option-m" onclick="App.selectAnswer('对')">✅ 对（正确）</button>
+          <button class="quiz-option-m" onclick="App.selectAnswer('错')">❌ 错（错误）</button>
+        `;
+      } else if (q.type === 'multiple') {
+        inputHtml = `
+          ${(q.options||[]).map((o,i) => `<button class="quiz-option-m" data-opt="${esc(o)}" onclick="App.toggleMulti('${esc(o)}',this)">${String.fromCharCode(65+i)}. ${esc(o)}</button>`).join('')}
+          <button class="btn-primary btn-full" onclick="App.submitMultiAnswer()" style="margin-top:8px">✅ 提交多选答案</button>
+          <div style="font-size:12px;color:var(--gray-500);text-align:center;margin-top:4px">可点击多个选项后提交</div>
+        `;
+      } else {
+        inputHtml = (q.options||[]).map((o,i) => `
+          <button class="quiz-option-m" data-opt="${esc(o)}" onclick="App.selectAnswer('${esc(o)}')">${String.fromCharCode(65+i)}. ${esc(o)}</button>
+        `).join('');
+      }
+    }
+
+    // Show styled options after answer
+    let afterOptsHtml = '';
+    if (this.quizAnswered && (q.type === 'single' || q.type === 'multiple' || q.type === 'truefalse')) {
+      if (q.type === 'truefalse') {
+        const ua = this.quizAnswers[q.id];
+        afterOptsHtml = `
+          <button class="quiz-option-m ${q.answer==='对'?'correct-answer':''} ${ua==='对'&&q.answer!=='对'?'wrong-answer':''}" disabled>✅ 对（正确）</button>
+          <button class="quiz-option-m ${q.answer==='错'?'correct-answer':''} ${ua==='错'&&q.answer!=='错'?'wrong-answer':''}" disabled>❌ 错（错误）</button>
+        `;
+      } else {
+        const ua = this.quizAnswers[q.id];
+        const uaArr = Array.isArray(ua) ? ua : [ua];
+        const caArr = Array.isArray(q.answer) ? q.answer : [q.answer];
+        afterOptsHtml = (q.options||[]).map((o,i) => {
+          let cls = '';
+          if (caArr.includes(o)) cls = 'correct-answer';
+          else if (uaArr.includes(o)) cls = 'wrong-answer';
+          return `<button class="quiz-option-m ${cls}" disabled>${String.fromCharCode(65+i)}. ${esc(o)}</button>`;
+        }).join('');
+      }
+    }
+
+    const cardCls = this.quizAnswered ? (this._checkAnswer(q, userAnswer) ? 'correct' : 'wrong') : '';
+    const correctCount = this._countCorrect();
+
+    container.innerHTML = `
+      <div class="quiz-progress-m">
+        <span class="counter">📝 ${current}/${total}</span>
+        <div class="pbar"><div class="pfill" style="width:${(current/total)*100}%"></div></div>
+        <span class="score-mini">✅ ${correctCount}</span>
+        <button class="btn-outline" style="padding:6px 12px;font-size:12px" onclick="App.quitQuiz()">退出</button>
+      </div>
+      <div class="quiz-card-m ${cardCls}" id="quiz-card">
+        <div class="q-type-label">${typeLabels[q.type]} · ${q.points}分</div>
+        <div class="q-text">${current}. ${esc(q.title)}</div>
+        ${inputHtml}
+        ${afterOptsHtml}
+        ${feedbackHtml}
+      </div>
+      <div class="quiz-nav-m">
+        <button class="btn-outline" ${current===1?'disabled':''} onclick="App.prevQuestion()">⬅ 上一题</button>
+        ${this.quizAnswered && current < total ? `<button class="btn-primary" onclick="App.nextQuestion()">下一题 ➡</button>` : ''}
+        ${this.quizAnswered && current === total ? `<button class="btn-success" onclick="App.finishQuiz()">🎯 查看成绩</button>` : ''}
+      </div>
+      <div class="swipe-hint">💡 左右滑动或按 A-D 键选择</div>
+    `;
+
+    // Swipe support
+    this._bindSwipe();
+  },
+
+  _bindSwipe() {
+    const card = document.getElementById('quiz-card');
+    if (!card) return;
+    let startX = 0;
+    card.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, {passive:true});
+    card.addEventListener('touchend', e => {
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 60 && this.quizAnswered) {
+        if (diff > 0 && this.quizIndex < this.quizQuestions.length - 1) this.nextQuestion();
+        else if (diff < 0 && this.quizIndex > 0) this.prevQuestion();
+      }
+    });
+  },
+
+  _renderStats(container) {
+    const totalQ = this.questions.length;
+    const typeCounts = {};
+    this.questions.forEach(q => { typeCounts[q.type] = (typeCounts[q.type]||0) + 1; });
+    const typeLabels = { single:'单选题', multiple:'多选题', truefalse:'判断题', fillblank:'填空题', essay:'应用题' };
+    const typeEmojis = { single:'🔘', multiple:'☑️', truefalse:'✅', fillblank:'✏️', essay:'📝' };
+
+    const totalAnswered = this.quizHistory.reduce((s,r) => s + r.total, 0);
+    const totalCorrect = this.quizHistory.reduce((s,r) => s + r.correct, 0);
+    const avgPct = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+
+    container.innerHTML = `
+      <h2 style="margin-bottom:16px">📊 学习统计</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div style="background:#fff;border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:32px;font-weight:800;color:var(--primary)">${totalQ}</div>
+          <div style="font-size:13px;color:var(--gray-500)">总题目数</div>
+        </div>
+        <div style="background:#fff;border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)">
+          <div style="font-size:32px;font-weight:800;color:var(--success)">${avgPct}%</div>
+          <div style="font-size:13px;color:var(--gray-500)">平均正确率</div>
+        </div>
+      </div>
+      <div style="background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:20px">
+        <h4 style="margin-bottom:12px">📁 题目分布</h4>
+        ${Object.entries(typeCounts).map(([k,v]) => `
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span>${typeEmojis[k]||'📄'}</span>
+            <span style="flex:1;font-size:14px">${typeLabels[k]||k}</span>
+            <span style="font-weight:600">${v} 题</span>
+          </div>
+        `).join('') || '<p style="color:var(--gray-400)">暂无题目</p>'}
+      </div>
+      ${this.quizHistory.length > 0 ? `
+        <div style="background:#fff;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+          <h4 style="margin-bottom:12px">📜 最近刷题记录</h4>
+          ${[...this.quizHistory].reverse().slice(0,10).map((r,i) => {
+            const pct = r.totalPoints > 0 ? Math.round((r.score / r.totalPoints) * 100) : 0;
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px">
+              <span style="color:var(--gray-500)">${r.date || '未知日期'}</span>
+              <span><b style="color:${pct>=60?'var(--success)':'var(--danger)'}">${r.score}/${r.totalPoints}</b> (${pct}%)</span>
+              <span>✅${r.correct} ❌${r.wrong}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      ` : '<div class="empty-state"><div class="icon">📊</div><p>还没有刷题记录</p></div>'}
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn-outline" style="flex:1" onclick="App.exportData()">📤 导出数据</button>
+        <button class="btn-outline" style="flex:1" onclick="App.importJSON()">📂 导入备份</button>
+      </div>
+      <button class="btn-outline" style="width:100%;margin-top:8px" onclick="App.loadDemoData()">🎲 加载示例数据</button>
+    `;
+  },
+
+  // ============================================
+  // SECTION DRAWER
+  // ============================================
+  showSectionDrawer() {
+    const countMap = {};
+    this.questions.forEach(q => { countMap[q.sectionId] = (countMap[q.sectionId]||0) + 1; });
+
+    const overlay = document.createElement('div');
+    overlay.className = 'drawer-overlay';
+    overlay.innerHTML = `
+      <div class="drawer" onclick="event.stopPropagation()">
+        <div class="drawer-handle"></div>
+        <div class="drawer-header">
+          <h3>📁 选择分区</h3>
+          <button style="background:none;font-size:20px;padding:4px 8px;color:var(--gray-500)" onclick="this.closest('.drawer-overlay').remove()">✕</button>
+        </div>
+        <div class="drawer-body">
+          ${this.sections.map(s => `
+            <div class="section-item-m${s.id===this.activeSectionId?' active':''}" onclick="App.selectSection('${s.id}');document.querySelector('.drawer-overlay')?.remove()">
+              <span class="s-icon">📁</span>
+              <span class="s-name">${esc(s.name)}</span>
+              <span class="s-count">${countMap[s.id]||0}</span>
+              <span class="s-actions">
+                <button onclick="event.stopPropagation();App.renameSection('${s.id}')">✏️</button>
+                <button onclick="event.stopPropagation();App.deleteSection('${s.id}')">🗑️</button>
+              </span>
+            </div>
+          `).join('')}
+        </div>
+        <div class="drawer-footer">
+          <button class="btn-primary" style="flex:1" onclick="App.addSection();document.querySelector('.drawer-overlay')?.remove()">+ 新建分区</button>
+          <button class="btn-outline" style="flex:1" onclick="App.importJSON();document.querySelector('.drawer-overlay')?.remove()">📂 导入</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  },
+
+  // ============================================
+  // TABS
+  // ============================================
+  switchTab(tab) {
+    this.activeTab = tab;
+    if (tab === 'quiz') {
+      this.quizQuestions = []; this.quizAnswers = {}; this.quizAnswered = false; this.quizSubmitted = false;
+    }
+    this._render();
+  },
+
+  // ============================================
+  // SECTION CRUD
+  // ============================================
+  selectSection(id) {
+    this.activeSectionId = id;
+    if (this.activeTab !== 'bank') this.activeTab = 'bank';
+    this._render();
+  },
+  addSection() {
+    const name = prompt('请输入分区名称：', `第${this.sections.length+1}单元`);
+    if (!name || !name.trim()) return;
+    this.sections.push({ id: DataManager.uid(), name: name.trim(), createdAt: new Date().toISOString() });
+    this.activeSectionId = this.sections[this.sections.length-1].id;
+    this._save(); this._render(); this.toast(`「${name.trim()}」创建成功！`, 'success');
+  },
+  renameSection(id) {
+    const s = this.sections.find(s => s.id === id);
+    if (!s) return;
+    const name = prompt('新名称：', s.name);
+    if (!name || !name.trim()) return;
+    s.name = name.trim();
+    this._save(); this._render(); this.toast('已重命名', 'success');
+  },
+  deleteSection(id) {
+    if (this.sections.length <= 1) { this.toast('至少保留一个分区', 'error'); return; }
+    const s = this.sections.find(s => s.id === id);
+    if (!s) return;
+    const count = this.questions.filter(q => q.sectionId === id).length;
+    this._confirm('删除分区', `确定删除「${s.name}」及其 ${count} 道题目？`, () => {
+      this.questions = this.questions.filter(q => q.sectionId !== id);
+      this.sections = this.sections.filter(s => s.id !== id);
+      if (this.activeSectionId === id) this.activeSectionId = this.sections[0].id;
+      this._save(); this._render(); this.toast('分区已删除', 'info');
+    });
+  },
+
+  // ============================================
+  // QUESTION CRUD
+  // ============================================
+  showAddQuestionModal(q) {
+    const isEdit = !!q;
+    const d = q || { type:'single', title:'', options:['','','',''], answer:'', points:5, explanation:'' };
+    this._modalData = { type: d.type, answer: d.answer };
+
+    const html = `
+      <div class="modal-overlay" onclick="if(event.target===this)App.closeModal()">
+        <div class="modal">
+          <h3>${isEdit?'编辑题目':'➕ 添加题目'}</h3>
+          <div class="form-row">
+            <div class="form-group"><label>类型</label>
+              <select id="mq-type" onchange="App._onTypeChange()">
+                <option value="single" ${d.type==='single'?'selected':''}>单选题</option>
+                <option value="multiple" ${d.type==='multiple'?'selected':''}>多选题</option>
+                <option value="truefalse" ${d.type==='truefalse'?'selected':''}>判断题</option>
+                <option value="fillblank" ${d.type==='fillblank'?'selected':''}>填空题</option>
+                <option value="essay" ${d.type==='essay'?'selected':''}>应用题</option>
+              </select>
+            </div>
+            <div class="form-group"><label>分值</label><input type="number" id="mq-points" value="${d.points}" min="1" max="100"></div>
+          </div>
+          <div class="form-group"><label>题目内容</label><textarea id="mq-title" placeholder="输入题目内容...">${esc(d.title)}</textarea></div>
+          <div id="mq-options-group" style="display:${['single','multiple','truefalse'].includes(d.type)?'block':'none'}">
+            <label>选项</label>
+            <div id="mq-options">
+              ${(d.options||[]).map((o,i) => `
+                <div class="option-row-m"><span class="letter">${String.fromCharCode(65+i)}.</span><input type="text" value="${esc(o)}"><button class="del-btn" onclick="this.closest('.option-row-m').remove();App._refreshChips()">✕</button></div>
+              `).join('')}
+            </div>
+            <button class="btn-outline" style="font-size:13px;margin-top:6px" onclick="App._addOptionRow()" id="mq-add-btn">+ 添加选项</button>
+          </div>
+          <div class="form-group"><label>正确答案 <span style="font-weight:400;color:var(--gray-500)" id="mq-hint">（点击选项）</span></label>
+            <div id="mq-answer-single" style="display:${d.type==='single'?'block':'none'}"><div class="answer-chips"></div></div>
+            <div id="mq-answer-multiple" style="display:${d.type==='multiple'?'block':'none'}"><div class="answer-chips"></div></div>
+            <div id="mq-answer-tf" style="display:${d.type==='truefalse'?'block':'none'}">
+              <div class="answer-chips">
+                <span class="answer-chip ${d.answer==='对'?'selected':''}" data-opt="对" onclick="App._selectChip(this,'single')">✅ 对</span>
+                <span class="answer-chip ${d.answer==='错'?'selected':''}" data-opt="错" onclick="App._selectChip(this,'single')">❌ 错</span>
+              </div>
+            </div>
+            <div id="mq-answer-text" style="display:${['fillblank','essay'].includes(d.type)?'block':'none'}">
+              <input type="text" id="mq-answer-input" value="${esc(d.answer||'')}" placeholder="输入正确答案">
+            </div>
+          </div>
+          <div class="form-group"><label>解析（可选）</label><textarea id="mq-explanation" style="min-height:60px">${esc(d.explanation||'')}</textarea></div>
+          <div class="modal-footer">
+            <button class="btn-outline" onclick="App.closeModal()">取消</button>
+            <button class="btn-primary" onclick="App.saveQuestion('${isEdit?d.id:''}')">${isEdit?'💾 保存':'➕ 添加'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+    this._showOverlay(html);
+    this._modalEditId = isEdit ? d.id : null;
+    setTimeout(() => this._refreshChips(), 50);
+  },
+
+  _onTypeChange() {
+    const type = document.getElementById('mq-type')?.value;
+    if (!type) return;
+    this._modalData.type = type;
+    const optsG = document.getElementById('mq-options-group');
+    const addBtn = document.getElementById('mq-add-btn');
+    const hint = document.getElementById('mq-hint');
+
+    optsG.style.display = ['single','multiple','truefalse'].includes(type) ? 'block' : 'none';
+    addBtn.style.display = type === 'truefalse' ? 'none' : 'inline-flex';
+
+    ['single','multiple','tf','text'].forEach(t => {
+      const el = document.getElementById(`mq-answer-${t}`);
+      if (el) el.style.display = 'none';
+    });
+    if (type === 'single') { document.getElementById('mq-answer-single').style.display='block'; hint.textContent='（点击一个选项）'; }
+    else if (type === 'multiple') { document.getElementById('mq-answer-multiple').style.display='block'; hint.textContent='（可点击多个）'; }
+    else if (type === 'truefalse') { document.getElementById('mq-answer-tf').style.display='block'; hint.textContent='（选择对或错）'; this._setTFOptions(); }
+    else { document.getElementById('mq-answer-text').style.display='block'; hint.textContent='（手动输入答案）'; }
+
+    this._refreshChips();
+  },
+
+  _setTFOptions() {
+    const container = document.getElementById('mq-options');
+    if (container) container.innerHTML = `
+      <div class="option-row-m"><span class="letter">A.</span><input type="text" value="对" readonly style="background:var(--gray-100)"></div>
+      <div class="option-row-m"><span class="letter">B.</span><input type="text" value="错" readonly style="background:var(--gray-100)"></div>
+    `;
+  },
+
+  _getModalOptions() {
+    const container = document.getElementById('mq-options');
+    return container ? Array.from(container.querySelectorAll('input')).map(i => i.value.trim()).filter(v => v) : [];
+  },
+
+  _refreshChips() {
+    const opts = this._getModalOptions();
+    const letters = 'ABCDEFGH';
+    ['single','multiple'].forEach(mode => {
+      const div = document.getElementById(`mq-answer-${mode}`);
+      if (!div) return;
+      const chipsDiv = div.querySelector('.answer-chips');
+      if (!chipsDiv) return;
+      chipsDiv.innerHTML = opts.map((o,i) => {
+        const sel = mode === 'single'
+          ? this._modalData.answer === o
+          : (Array.isArray(this._modalData.answer) && this._modalData.answer.includes(o));
+        return `<span class="answer-chip${sel?' selected':''}" data-opt="${esc(o)}" onclick="App._selectChip(this,'${mode}')">${letters[i]}. ${esc(o)}</span>`;
+      }).join('');
+    });
+  },
+
+  _addOptionRow() {
+    const container = document.getElementById('mq-options');
+    if (!container) return;
+    const idx = container.children.length;
+    const row = document.createElement('div');
+    row.className = 'option-row-m';
+    row.innerHTML = `<span class="letter">${String.fromCharCode(65+idx)}.</span><input type="text" placeholder="选项 ${String.fromCharCode(65+idx)}"><button class="del-btn" onclick="this.closest('.option-row-m').remove();App._refreshChips()">✕</button>`;
+    container.appendChild(row);
+    this._refreshChips();
+  },
+
+  _selectChip(el, mode) {
+    const parent = el.parentElement;
+    if (mode === 'single') {
+      parent.querySelectorAll('.answer-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      this._modalData.answer = el.dataset.opt;
+    } else {
+      el.classList.toggle('selected');
+      this._modalData.answer = Array.from(parent.querySelectorAll('.answer-chip.selected')).map(c => c.dataset.opt);
+    }
+  },
+
+  saveQuestion(editId) {
+    const title = document.getElementById('mq-title')?.value?.trim();
+    if (!title) { this.toast('请输入题目内容', 'error'); return; }
+    const type = document.getElementById('mq-type')?.value || 'single';
+    let options = [], answer = '';
+
+    if (['single','multiple','truefalse'].includes(type)) {
+      options = this._getModalOptions();
+      if (!options.length && type !== 'truefalse') { this.toast('请添加选项', 'error'); return; }
+      answer = this._modalData.answer;
+      if (!answer || (Array.isArray(answer) && !answer.length)) { this.toast('请选择正确答案', 'error'); return; }
+    } else {
+      answer = document.getElementById('mq-answer-input')?.value?.trim() || '';
+    }
+    const points = parseInt(document.getElementById('mq-points')?.value) || 5;
+    const explanation = document.getElementById('mq-explanation')?.value?.trim() || '';
+
+    if (editId) {
+      const q = this.questions.find(q => q.id === editId);
+      if (q) { Object.assign(q, { type, title, options, answer, points, explanation }); }
+      this.toast('题目已更新', 'success');
+    } else {
+      this.questions.push({ id: DataManager.uid(), sectionId: this.activeSectionId, type, title, options, answer, points, explanation });
+      this.toast('题目已添加', 'success');
+    }
+    this._modalData = {}; this.closeModal(); this._save(); this._render();
+  },
+
+  editQuestion(id) { const q = this.questions.find(q => q.id === id); if (q) this.showAddQuestionModal(q); },
+  deleteQuestion(id) {
+    this._confirm('删除题目', '确定删除这道题目吗？', () => {
+      this.questions = this.questions.filter(q => q.id !== id);
+      this._save(); this._render(); this.toast('题目已删除', 'info');
+    });
+  },
+
+  // ============================================
+  // IMPORT / EXPORT
+  // ============================================
+  showImportModal() {
+    const section = this.sections.find(s => s.id === this.activeSectionId);
+    const html = `
+      <div class="modal-overlay" onclick="if(event.target===this)App.closeModal()">
+        <div class="modal">
+          <h3>📥 导入到「${esc(section?.name||'')}」</h3>
+          <div class="import-tabs-m">
+            <button class="import-tab-m active" data-t="paste" onclick="App._switchImportTab('paste')">📋 粘贴文本</button>
+            <button class="import-tab-m" data-t="file" onclick="App._switchImportTab('file')">📁 上传文件</button>
+          </div>
+          <div id="import-paste"><textarea class="import-textarea-m" id="import-text" placeholder="粘贴题目...&#10;&#10;格式：&#10;1. 题目&#10;A. 选项A&#10;B. 选项B&#10;答案：A&#10;分值：5"></textarea></div>
+          <div id="import-file" style="display:none">
+            <p style="font-size:13px;color:var(--gray-500);margin-bottom:8px">支持 .txt .csv .xlsx .docx</p>
+            <input type="file" id="import-file-input" accept=".txt,.csv,.xlsx,.xls,.docx" onchange="App._handleFile(this.files[0])">
+            <div id="import-file-preview" style="margin-top:12px;max-height:200px;overflow-y:auto"></div>
+          </div>
+          <div id="import-preview" style="display:none;margin-top:12px;max-height:200px;overflow-y:auto"></div>
+          <div class="modal-footer">
+            <button class="btn-outline" onclick="App.closeModal()">取消</button>
+            <button class="btn-outline" onclick="App._previewImport()">🔍 预览</button>
+            <button class="btn-primary" onclick="App._confirmImport()">📥 导入</button>
+          </div>
+        </div>
+      </div>
+    `;
+    this._showOverlay(html); this._parsedQuestions = [];
+  },
+
+  _switchImportTab(t) {
+    document.querySelectorAll('.import-tab-m').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+    document.getElementById('import-paste').style.display = t === 'paste' ? 'block' : 'none';
+    document.getElementById('import-file').style.display = t === 'file' ? 'block' : 'none';
+  },
+
+  _previewImport() {
+    const text = document.getElementById('import-text')?.value?.trim();
+    if (!text) { this.toast('请粘贴题目文本', 'error'); return; }
+    this._parsedQuestions = QuestionParser.parse(text, this.activeSectionId);
+    const preview = document.getElementById('import-preview');
+    preview.style.display = 'block';
+    preview.innerHTML = `<h4 style="margin-bottom:8px">识别到 ${this._parsedQuestions.length} 道：</h4>
+      ${this._parsedQuestions.map((q,i) => `<div style="padding:6px 10px;background:var(--gray-50);border-radius:6px;margin-bottom:4px;font-size:13px;display:flex;align-items:center;gap:8px"><b>${i+1}.</b><span class="q-type-badge ${q.type}">${q.type}</span>${esc(q.title).substring(0,50)}... <span style="color:var(--gray-400);margin-left:auto">${q.points}分</span></div>`).join('')}`;
+  },
+
+  _confirmImport() {
+    const text = document.getElementById('import-text')?.value?.trim();
+    if (!this._parsedQuestions.length && text) this._parsedQuestions = QuestionParser.parse(text, this.activeSectionId);
+    if (!this._parsedQuestions.length) { this.toast('未识别到题目', 'error'); return; }
+    const count = this._parsedQuestions.length;
+    this.questions.push(...this._parsedQuestions);
+    this._parsedQuestions = []; this._save(); this.closeModal(); this._render();
+    this.toast(`成功导入 ${count} 道题目！`, 'success');
+  },
+
+  _handleFile(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    const preview = document.getElementById('import-file-preview');
+    if (ext === 'txt' || ext === 'csv') {
+      const reader = new FileReader();
+      reader.onload = e => { document.getElementById('import-text').value = e.target.result; preview.innerHTML = '<p style="color:var(--success)">✅ 读取成功，请点击预览</p>'; };
+      reader.readAsText(file);
+    } else if (ext === 'xlsx' || ext === 'xls') {
+      if (typeof XLSX === 'undefined') { preview.innerHTML = '<p style="color:var(--danger)">❌ Excel解析库加载失败</p>'; return; }
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const wb = XLSX.read(e.target.result, {type:'array'});
+          const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+          let text = '';
+          data.forEach(row => { if (row && row.length > 0) text += row.join(' ') + '\n'; });
+          document.getElementById('import-text').value = text;
+          preview.innerHTML = `<p style="color:var(--success)">✅ Excel读取成功（${data.length}行）</p>`;
+        } catch(err) { preview.innerHTML = `<p style="color:var(--danger)">❌ 解析失败</p>`; }
+      };
+      reader.readAsArrayBuffer(file);
+    } else if (ext === 'docx') {
+      if (typeof mammoth === 'undefined') { preview.innerHTML = '<p style="color:var(--danger)">❌ Word解析库加载失败</p>'; return; }
+      const reader = new FileReader();
+      reader.onload = e => {
+        mammoth.extractRawText({arrayBuffer: e.target.result})
+          .then(r => { document.getElementById('import-text').value = r.value; preview.innerHTML = '<p style="color:var(--success)">✅ Word读取成功</p>'; })
+          .catch(err => { preview.innerHTML = `<p style="color:var(--danger)">❌ 解析失败</p>`; });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  },
+
+  exportData() { DataManager.exportJSON(this.sections, this.questions); },
+  importJSON() {
+    if (window.electronAPI?.isElectron) {
+      window.electronAPI.openFile().then(r => {
+        if (r?.content) {
+          try {
+            const data = JSON.parse(r.content);
+            if (data.sections && data.questions) {
+              this._confirm('导入数据', `导入 ${data.sections.length} 个分区和 ${data.questions.length} 道题目？当前数据将被覆盖。`, () => {
+                this.sections = data.sections; this.questions = data.questions;
+                this.activeSectionId = this.sections[0]?.id || null; this._save(); this._render();
+                this.toast('数据导入成功！', 'success');
+              });
+            }
+          } catch(e) { this.toast('文件格式不正确', 'error'); }
+        }
+      });
+      return;
+    }
+    const input = document.getElementById('file-input');
+    input.accept = '.json';
+    input.onchange = async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const data = await DataManager.importJSON(file);
+        this._confirm('导入数据', `导入 ${data.sections.length} 个分区和 ${data.questions.length} 道题目？当前数据将被覆盖。`, () => {
+          this.sections = data.sections; this.questions = data.questions;
+          this.activeSectionId = this.sections[0]?.id || null; this._save(); this._render();
+          this.toast('导入成功！', 'success');
+        });
+      } catch(e) { this.toast('文件格式不正确', 'error'); }
+      input.value = '';
+    };
+    input.click();
+  },
+
+  // ============================================
+  // DEMO DATA
+  // ============================================
+  loadDemoData() {
+    this._confirm('加载示例', '将添加示例分区和题目（不覆盖现有数据）。确定？', () => {
+      const s1 = { id: DataManager.uid(), name: '第一单元·计算机基础', createdAt: new Date().toISOString() };
+      const s2 = { id: DataManager.uid(), name: '第二单元·网络知识', createdAt: new Date().toISOString() };
+      this.sections.push(s1, s2);
+      const demos = [
+        { id: DataManager.uid(), sectionId: s1.id, type:'single', title:'计算机的核心部件，负责运算和控制的芯片是什么？', options:['内存','硬盘','CPU','显卡'], answer:'CPU', points:5, explanation:'CPU是计算机的核心，负责执行指令和处理数据。' },
+        { id: DataManager.uid(), sectionId: s1.id, type:'single', title:'1GB等于多少MB？', options:['100MB','512MB','1000MB','1024MB'], answer:'1024MB', points:5 },
+        { id: DataManager.uid(), sectionId: s1.id, type:'multiple', title:'以下哪些是输出设备？', options:['显示器','键盘','打印机','鼠标'], answer:['显示器','打印机'], points:10 },
+        { id: DataManager.uid(), sectionId: s1.id, type:'truefalse', title:'RAM中的数据在断电后会丢失。', options:['对','错'], answer:'对', points:3 },
+        { id: DataManager.uid(), sectionId: s1.id, type:'fillblank', title:'操作系统的英文缩写是____。', options:[], answer:'OS', points:5, explanation:'OS = Operating System。' },
+        { id: DataManager.uid(), sectionId: s2.id, type:'single', title:'HTTP协议默认端口号是？', options:['21','25','80','443'], answer:'80', points:5 },
+        { id: DataManager.uid(), sectionId: s2.id, type:'truefalse', title:'TCP是无连接的传输协议。', options:['对','错'], answer:'错', points:3 },
+        { id: DataManager.uid(), sectionId: s2.id, type:'multiple', title:'以下哪些是网络拓扑结构？', options:['星型','总线型','环型','散射型'], answer:['星型','总线型','环型'], points:10 },
+        { id: DataManager.uid(), sectionId: s2.id, type:'fillblank', title:'将域名解析为IP地址的系统叫____。', options:[], answer:'DNS', points:5 },
+        { id: DataManager.uid(), sectionId: s2.id, type:'essay', title:'请简述TCP和UDP的主要区别。', options:[], answer:'TCP面向连接、可靠传输；UDP无连接、不可靠但效率高。', points:15 },
+      ];
+      this.questions.push(...demos);
+      this.activeSectionId = s1.id; this._save(); this._render();
+      this.toast(`已加载 ${demos.length} 道示例题目`, 'success');
+    });
+  },
+
+  // ============================================
+  // QUIZ ENGINE
+  // ============================================
+  startQuiz() {
+    const checked = document.querySelectorAll('#quiz-sections .section-chip.checked input');
+    const sectionIds = Array.from(checked).map(cb => cb.value);
+    if (!sectionIds.length) { this.toast('请选择分区', 'error'); return; }
+    let pool = this.questions.filter(q => sectionIds.includes(q.sectionId));
+    if (!pool.length) { this.toast('所选分区没有题目', 'error'); return; }
+    pool = this._shuffle([...pool]);
+    const limit = parseInt(document.getElementById('quiz-limit')?.value) || 0;
+    if (limit > 0 && limit < pool.length) pool = pool.slice(0, limit);
+    this.quizQuestions = pool; this.quizIndex = 0; this.quizAnswers = {}; this.quizAnswered = false; this.quizSubmitted = false; this._lastResult = null;
+    this._renderMain();
+  },
+
+  selectAnswer(opt) {
+    if (this.quizAnswered) return;
+    const q = this.quizQuestions[this.quizIndex];
+    this.quizAnswers[q.id] = opt;
+    this.quizAnswered = true;
+    this._renderQuizQuestion();
+    if (this._checkAnswer(q, opt)) {
+      setTimeout(() => { if (this.quizIndex < this.quizQuestions.length - 1) this.nextQuestion(); }, 1000);
+    }
+  },
+
+  toggleMulti(opt, el) {
+    if (this.quizAnswered) return;
+    el.classList.toggle('selected');
+  },
+
+  submitMultiAnswer() {
+    if (this.quizAnswered) return;
+    const selected = document.querySelectorAll('#quiz-card .quiz-option-m.selected');
+    const answers = Array.from(selected).map(el => el.dataset.opt);
+    if (!answers.length) { this.toast('请至少选择一个选项', 'error'); return; }
+    const q = this.quizQuestions[this.quizIndex];
+    this.quizAnswers[q.id] = answers;
+    this.quizAnswered = true;
+    this._renderQuizQuestion();
+  },
+
+  submitTextAnswer() {
+    if (this.quizAnswered) return;
+    const input = document.getElementById('quiz-input');
+    if (!input?.value.trim()) { this.toast('请输入答案', 'error'); return; }
+    const q = this.quizQuestions[this.quizIndex];
+    this.quizAnswers[q.id] = input.value.trim();
+    this.quizAnswered = true;
+    this._renderQuizQuestion();
+  },
+
+  prevQuestion() {
+    if (this.quizIndex > 0) { this.quizIndex--; this.quizAnswered = !!this.quizAnswers[this.quizQuestions[this.quizIndex]?.id]; this._renderQuizQuestion(); }
+  },
+  nextQuestion() {
+    if (this.quizIndex < this.quizQuestions.length - 1) { this.quizIndex++; this.quizAnswered = !!this.quizAnswers[this.quizQuestions[this.quizIndex]?.id]; this._renderQuizQuestion(); }
+  },
+
+  finishQuiz() {
+    this.quizSubmitted = true;
+    let correct = 0, wrong = 0, totalPoints = 0, score = 0;
+    this.quizQuestions.forEach(q => {
+      const ua = this.quizAnswers[q.id];
+      const isCorrect = this._checkAnswer(q, ua);
+      totalPoints += q.points;
+      if (isCorrect) { correct++; score += q.points; } else { wrong++; }
+    });
+    this._lastResult = { total: this.quizQuestions.length, correct, wrong, totalPoints, score, date: new Date().toLocaleDateString() };
+    this.quizHistory.push(this._lastResult);
+    this._saveHistory();
+
+    const container = document.getElementById('main-content');
+    const pct = totalPoints > 0 ? Math.round((score / totalPoints) * 100) : 0;
+    const grade = pct >= 90 ? 'excellent' : pct >= 75 ? 'good' : pct >= 60 ? 'fair' : 'poor';
+    const gradeText = pct >= 90 ? '🌟 优秀！' : pct >= 75 ? '👍 良好！' : pct >= 60 ? '📚 及格' : '💪 继续努力！';
+
+    container.innerHTML = `
+      <div class="result-card">
+        <div class="score-ring ${grade}"><div class="big">${score}</div><div class="small">/ ${totalPoints}分</div></div>
+        <h2>${gradeText}</h2><p style="color:var(--gray-500)">正确率 ${pct}%</p>
+        <div class="result-details">
+          <div class="row"><span>✅ 答对</span><span style="color:var(--success);font-weight:600">${correct}题（${score}分）</span></div>
+          <div class="row"><span>❌ 答错</span><span style="color:var(--danger);font-weight:600">${wrong}题</span></div>
+          <div class="row"><span>📝 总题数</span><span>${this.quizQuestions.length}题（${totalPoints}分）</span></div>
+        </div>
+        <h4 style="text-align:left;margin:20px 0 10px">📋 答题详情</h4>
+        ${this.quizQuestions.map((q,i) => {
+          const ua = this.quizAnswers[q.id];
+          const isCorrect = this._checkAnswer(q, ua);
+          const correctAns = Array.isArray(q.answer) ? q.answer.join('、') : q.answer;
+          const userAns = Array.isArray(ua) ? ua.join('、') : (ua || '未作答');
+          return `<div class="result-item" style="background:${isCorrect?'var(--success-bg)':'var(--danger-bg)'}">
+            <span class="r-icon">${isCorrect?'✅':'❌'}</span>
+            <div style="flex:1">
+              <div style="font-weight:500">${i+1}. ${esc(q.title)}</div>
+              <div style="font-size:12px;color:var(--gray-600);margin-top:2px">你的答案：<span style="color:${isCorrect?'var(--success)':'var(--danger)'};font-weight:600">${esc(userAns)}</span>
+              ${!isCorrect ? ` | 正确：<span style="color:var(--success);font-weight:600">${esc(correctAns)}</span>` : ''}</div>
+              ${!isCorrect && q.explanation ? `<div style="font-size:11px;color:var(--gray-500);margin-top:2px">💡 ${esc(q.explanation)}</div>` : ''}
+            </div>
+            <span style="font-size:12px;color:var(--gray-400)">${q.points}分</span>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;gap:8px;margin-top:20px">
+          <button class="btn-outline" style="flex:1" onclick="App.retryQuiz()">🔄 重新作答</button>
+          <button class="btn-primary" style="flex:1" onclick="App.newQuiz()">📝 新一轮</button>
+        </div>
+      </div>
+    `;
+  },
+
+  retryQuiz() { this.quizIndex = 0; this.quizAnswers = {}; this.quizAnswered = false; this.quizSubmitted = false; this._renderMain(); },
+  newQuiz() { this.quizQuestions = []; this.quizIndex = 0; this.quizAnswers = {}; this.quizAnswered = false; this.quizSubmitted = false; this._renderMain(); },
+  quitQuiz() {
+    this._confirm('退出答题', '确定退出？已答题目不会保存。', () => {
+      this.quizQuestions = []; this.quizIndex = 0; this.quizAnswers = {}; this.quizAnswered = false; this.quizSubmitted = false;
+      this._renderMain();
+    });
+  },
+
+  _countCorrect() {
+    let count = 0;
+    Object.keys(this.quizAnswers).forEach(qid => {
+      const q = this.quizQuestions.find(qq => qq.id === qid);
+      if (q && this._checkAnswer(q, this.quizAnswers[qid])) count++;
+    });
+    return count;
+  },
+
+  _checkAnswer(q, userAnswer) {
+    if (!userAnswer) return false;
+    const correct = q.answer;
+    if (q.type === 'multiple') {
+      if (!Array.isArray(userAnswer) || !Array.isArray(correct)) return false;
+      if (userAnswer.length !== correct.length) return false;
+      return [...userAnswer].sort().every((a,i) => a === [...correct].sort()[i]);
+    }
+    if (Array.isArray(correct)) return correct.includes(userAnswer);
+    if (q.type === 'fillblank' || q.type === 'essay') return userAnswer.trim().toLowerCase() === (correct||'').trim().toLowerCase();
+    return userAnswer === correct;
+  },
+
+  // ============================================
+  // UI HELPERS
+  // ============================================
+  _showOverlay(html) {
+    this.closeModal();
+    const div = document.createElement('div');
+    div.id = 'modal-overlay';
+    div.innerHTML = html;
+    document.body.appendChild(div);
+  },
+
+  closeModal() {
+    document.getElementById('modal-overlay')?.remove();
+    this._modalData = {}; this._parsedQuestions = [];
+  },
+
+  toast(msg, type='info') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = `toast-${type}`;
+    toast.style.display = 'block';
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2000);
+  },
+
+  _confirm(title, msg, onOk) {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-bg" onclick="this.closest('.confirm-overlay').remove()"></div>
+      <div class="confirm-box">
+        <h4>${esc(title)}</h4><p>${esc(msg)}</p>
+        <div class="btns">
+          <button class="btn-outline" onclick="this.closest('.confirm-overlay').remove()">取消</button>
+          <button class="btn-danger-outline" id="confirm-ok">确定</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#confirm-ok').addEventListener('click', () => { overlay.remove(); onOk(); });
+  },
+
+  _shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; },
+
+  // PWA Install
+  _deferredPrompt: null,
+  installPWA() {
+    if (this._deferredPrompt) {
+      this._deferredPrompt.prompt();
+      this._deferredPrompt.userChoice.then(result => {
+        if (result.outcome === 'accepted') document.getElementById('install-banner').style.display = 'none';
+        this._deferredPrompt = null;
+      });
+    } else {
+      // Fallback: show instructions
+      const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+      if (isIOS) {
+        this.toast('📱 点击底部分享按钮 → 添加到主屏幕', 'info');
+      } else {
+        this.toast('📱 点击浏览器菜单 → 添加到主屏幕', 'info');
+      }
+    }
+  },
+  dismissInstall() {
+    document.getElementById('install-banner').style.display = 'none';
+  },
+
+  // ============================================
+  // EVENTS
+  // ============================================
+  _bindEvents() {
+    // PWA install prompt
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      this._deferredPrompt = e;
+      document.getElementById('install-banner').style.display = 'block';
+    });
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('install-banner').style.display = 'none';
+      this._deferredPrompt = null;
+    });
+
+    document.addEventListener('keydown', e => {
+      if (this.activeTab !== 'quiz' || !this.quizQuestions.length || this.quizSubmitted) return;
+      const q = this.quizQuestions[this.quizIndex];
+      if (!q) return;
+      if ((e.key === 'ArrowRight' || e.key === 'n') && this.quizAnswered && this.quizIndex < this.quizQuestions.length - 1) {
+        e.preventDefault(); this.nextQuestion();
+      } else if ((e.key === 'ArrowLeft' || e.key === 'p') && this.quizIndex > 0) {
+        e.preventDefault(); this.prevQuestion();
+      } else if (e.key === 'Enter' && !this.quizAnswered && (q.type === 'fillblank' || q.type === 'essay')) {
+        e.preventDefault(); this.submitTextAnswer();
+      } else if (!this.quizAnswered && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const key = e.key.toUpperCase();
+        if (q.type === 'single' && /^[A-H]$/.test(key)) {
+          const idx = key.charCodeAt(0) - 65;
+          if (idx < (q.options||[]).length) { e.preventDefault(); this.selectAnswer(q.options[idx]); }
+        } else if (q.type === 'multiple' && /^[A-H]$/.test(key)) {
+          const idx = key.charCodeAt(0) - 65;
+          if (idx < (q.options||[]).length) {
+            e.preventDefault();
+            const el = document.querySelector(`#quiz-card .quiz-option-m[data-opt="${esc(q.options[idx])}"]`);
+            if (el) this.toggleMulti(q.options[idx], el);
+          }
+        } else if (q.type === 'truefalse') {
+          if (key === 'A' || key === '1') { e.preventDefault(); this.selectAnswer('对'); }
+          else if (key === 'B' || key === '2') { e.preventDefault(); this.selectAnswer('错'); }
+        }
+      }
+    });
+  }
+};
+
+// Helpers
+function esc(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML.replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+}
+
+// Launch with error handling
+var _debugMsgs = [];
+function _debug(msg) {
+  _debugMsgs.push(new Date().toLocaleTimeString() + ' ' + msg);
+  var panel = document.getElementById('debug-panel');
+  var msgs = document.getElementById('debug-msgs');
+  if (panel && msgs) {
+    panel.style.display = 'block';
+    msgs.innerHTML = _debugMsgs.slice(-20).join('<br>');
+  }
+  console.log('[DEBUG]', msg);
+}
+
+// ============ TOUCH-TO-CLICK POLYFILL ============
+// Some mobile browsers don't fire click events properly.
+// This converts touchend → synthetic click for all interactive elements.
+(function(){
+  var interactiveSelector = 'button, .quiz-option-m, .section-item-m, .section-chip, .answer-chip, .import-tab-m, .nav-item, .section-checkbox, .faq-item';
+  var lastTouch = { x:0, y:0, time:0 };
+
+  document.addEventListener('touchstart', function(e){
+    if (e.touches.length === 1) {
+      lastTouch.x = e.touches[0].clientX;
+      lastTouch.y = e.touches[0].clientY;
+      lastTouch.time = Date.now();
+      lastTouch.target = e.target;
+    }
+  }, {passive: true});
+
+  document.addEventListener('touchend', function(e){
+    var target = e.target.closest ? e.target.closest(interactiveSelector) : null;
+    if (!target) target = e.target;
+    if (!target || target.disabled) return;
+
+    // Check it matches interactive selector
+    if (!target.matches || !target.matches(interactiveSelector)) {
+      // Also check parent
+      var parent = target.closest ? target.closest(interactiveSelector) : null;
+      if (parent) target = parent;
+      else return;
+    }
+
+    var dx = Math.abs((e.changedTouches[0]||{}).clientX - lastTouch.x) || 0;
+    var dy = Math.abs((e.changedTouches[0]||{}).clientY - lastTouch.y) || 0;
+
+    // Only convert if it was a tap (not swipe/scroll)
+    if (dx < 15 && dy < 15) {
+      e.preventDefault();
+      e.stopPropagation();
+      // Fire synthetic click
+      var clickEvt = new MouseEvent('click', {
+        bubbles: true, cancelable: true,
+        clientX: lastTouch.x, clientY: lastTouch.y
+      });
+      target.dispatchEvent(clickEvt);
+    }
+  }, {passive: false, capture: true});
+})();
+// ============ END POLYFILL ============
+_debug('Page loaded');
+
+document.addEventListener('DOMContentLoaded', () => {
+  _debug('DOM ready, starting App...');
+  try { App.init(); _debug('App.init() OK'); } catch(e) { _debug('ERROR: ' + e.message); }
+});
+window.onerror = function(msg, url, line) { _debug('JS ERROR: ' + msg + ' line:' + line); return false; };
+</script>
+</body>
+</html>
