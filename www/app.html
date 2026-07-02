@@ -1808,52 +1808,51 @@ function _debug(msg) {
   console.log('[DEBUG]', msg);
 }
 
-// ============ TOUCH-TO-CLICK POLYFILL ============
-// Some mobile browsers don't fire click events properly.
-// This converts touchend → synthetic click for all interactive elements.
-(function(){
-  var interactiveSelector = 'button, .quiz-option-m, .section-item-m, .section-chip, .answer-chip, .import-tab-m, .nav-item, .section-checkbox, .faq-item';
-  var lastTouch = { x:0, y:0, time:0 };
+// ============ TOUCH FIX ============
+// Some mobile browsers don't fire click events.
+// This copies onclick → ontouchend for all elements.
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    document.querySelectorAll('[onclick]').forEach(function(el) {
+      if (!el._touchFixed) {
+        var fn = el.onclick;
+        el.ontouchend = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (fn) fn.call(el, e);
+        };
+        el._touchFixed = true;
+      }
+    });
+  }, 100);
+});
 
-  document.addEventListener('touchstart', function(e){
-    if (e.touches.length === 1) {
-      lastTouch.x = e.touches[0].clientX;
-      lastTouch.y = e.touches[0].clientY;
-      lastTouch.time = Date.now();
-      lastTouch.target = e.target;
-    }
-  }, {passive: true});
+// Also observe for dynamically created elements
+var _origInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+if (_origInnerHTML) {
+  Object.defineProperty(Element.prototype, 'innerHTML', {
+    set: function(val) {
+      _origInnerHTML.set.call(this, val);
+      var self = this;
+      setTimeout(function() {
+        self.querySelectorAll('[onclick]').forEach(function(el) {
+          if (!el._touchFixed) {
+            var fn = el.onclick;
+            el.ontouchend = function(e) {
+              e.preventDefault();
+              if (fn) fn.call(el, e);
+            };
+            el._touchFixed = true;
+          }
+        });
+      }, 50);
+    },
+    get: function() { return _origInnerHTML.get.call(this); }
+  });
+}
 
-  document.addEventListener('touchend', function(e){
-    var target = e.target.closest ? e.target.closest(interactiveSelector) : null;
-    if (!target) target = e.target;
-    if (!target || target.disabled) return;
-
-    // Check it matches interactive selector
-    if (!target.matches || !target.matches(interactiveSelector)) {
-      // Also check parent
-      var parent = target.closest ? target.closest(interactiveSelector) : null;
-      if (parent) target = parent;
-      else return;
-    }
-
-    var dx = Math.abs((e.changedTouches[0]||{}).clientX - lastTouch.x) || 0;
-    var dy = Math.abs((e.changedTouches[0]||{}).clientY - lastTouch.y) || 0;
-
-    // Only convert if it was a tap (not swipe/scroll)
-    if (dx < 15 && dy < 15) {
-      e.preventDefault();
-      e.stopPropagation();
-      // Fire synthetic click
-      var clickEvt = new MouseEvent('click', {
-        bubbles: true, cancelable: true,
-        clientX: lastTouch.x, clientY: lastTouch.y
-      });
-      target.dispatchEvent(clickEvt);
-    }
-  }, {passive: false, capture: true});
-})();
-// ============ END POLYFILL ============
+_debug('Touch fix active');
+// ============ END TOUCH FIX ============
 _debug('Page loaded');
 
 document.addEventListener('DOMContentLoaded', () => {
