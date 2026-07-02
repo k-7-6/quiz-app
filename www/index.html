@@ -550,6 +550,11 @@ select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:u
 </style>
 </head>
 <body>
+<!-- DEBUG PANEL -->
+<div id="debug-panel" style="position:fixed;bottom:80px;left:8px;right:8px;background:#111;color:#0f0;padding:10px;border-radius:10px;z-index:999;font-size:11px;font-family:monospace;max-height:200px;overflow-y:auto;display:none">
+  <div id="debug-msgs"></div>
+  <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:red;color:#fff;border:none;padding:4px 12px;border-radius:12px;font-size:12px;margin-top:6px">关闭调试</button>
+</div>
 
 <!-- ============================================ -->
 <!-- PWA INSTALL BANNER                            -->
@@ -1790,10 +1795,24 @@ function esc(str) {
 }
 
 // Launch with error handling
+var _debugMsgs = [];
+function _debug(msg) {
+  _debugMsgs.push(new Date().toLocaleTimeString() + ' ' + msg);
+  var panel = document.getElementById('debug-panel');
+  var msgs = document.getElementById('debug-msgs');
+  if (panel && msgs) {
+    panel.style.display = 'block';
+    msgs.innerHTML = _debugMsgs.slice(-20).join('<br>');
+  }
+  console.log('[DEBUG]', msg);
+}
+_debug('Page loaded');
+
 document.addEventListener('DOMContentLoaded', () => {
-  try { App.init(); } catch(e) { console.error('App init error:', e); }
+  _debug('DOM ready, starting App...');
+  try { App.init(); _debug('App.init() OK'); } catch(e) { _debug('ERROR: ' + e.message); }
 });
-window.onerror = function(msg, url, line) { console.log('JS Error:', msg, line); return false; };
+window.onerror = function(msg, url, line) { _debug('JS ERROR: ' + msg + ' line:' + line); return false; };
 </script>
 </body>
 </html>
