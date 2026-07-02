@@ -1,0 +1,24 @@
+{
+  "name": "quiz-app",
+  "version": "2.0.0",
+  "description": "刷题小程序 - 支持Android/iOS/Web/微信小程序全平台",
+  "main": "www/index.html",
+  "scripts": {
+    "start": "npx serve www",
+    "cap:init": "npx cap init 刷题小程序 com.quiz.app --web-dir=www",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:build:android": "npx cap sync && cd android && ./gradlew assembleRelease",
+    "build": "npm run cap:sync"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "serve": "^14.0.0"
+  }
+}

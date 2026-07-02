@@ -1,0 +1,14 @@
+<view class="container">
+  <view class="card"><text style="font-size:36rpx;font-weight:700">📊 学习统计</text></view>
+  <view class="stat-row">
+    <view class="stat-card"><text class="big-num">{{totalQuestions}}</text><text>总题目</text></view>
+    <view class="stat-card"><text class="big-num">{{avgPct}}%</text><text>正确率</text></view>
+  </view>
+  <view class="card" wx:if="{{quizHistory.length > 0}}">
+    <text style="font-weight:700">📜 最近记录</text>
+    <view class="history-item" wx:for="{{quizHistory}}" wx:key="index">
+      <text>{{item.date}}</text>
+      <text>{{item.score}}/{{item.totalPoints}} ({{item.totalPoints > 0 ? item.score/item.totalPoints*100 : 0}}%)</text>
+    </view>
+  </view>
+</view>

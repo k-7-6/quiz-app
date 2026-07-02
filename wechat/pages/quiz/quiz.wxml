@@ -1,0 +1,81 @@
+<!-- 刷题页面 -->
+<view class="container">
+  <block wx:if="{{!started}}">
+    <!-- 刷题设置 -->
+    <view class="card setup-card">
+      <view class="setup-title">🎯 开始刷题</view>
+      <view class="setup-desc">选择分区开始答题</view>
+      <view class="section-chips">
+        <view class="chip {{item.checked ? 'checked' : ''}}"
+              wx:for="{{sectionOptions}}" wx:key="id"
+              bindtap="toggleSection" data-id="{{item.id}}">
+          {{item.name}} ({{item.count}})
+        </view>
+      </view>
+      <view class="form-row">
+        <text>题目数量</text>
+        <input type="number" value="{{limit}}" bindinput="onLimit" placeholder="0=全部"/>
+      </view>
+      <button class="btn-primary btn-full" bindtap="startQuiz">🚀 开始答题</button>
+    </view>
+  </block>
+
+  <block wx:else>
+    <!-- 答题中 -->
+    <view class="progress-bar">
+      <text>📝 {{current}}/{{total}}</text>
+      <progress percent="{{progress}}" stroke-width="6" activeColor="#4f46e5"/>
+      <text>✅ {{correctCount}}</text>
+    </view>
+
+    <view class="card quiz-card {{answered ? (isCorrect ? 'correct' : 'wrong') : ''}}">
+      <text class="q-type">{{typeLabel}} · {{question.points}}分</text>
+      <text class="q-text">{{current}}. {{question.title}}</text>
+
+      <!-- 选项 -->
+      <block wx:if="{{question.type === 'single' || question.type === 'multiple' || question.type === 'truefalse'}}">
+        <view class="option {{opt.selected ? 'selected' : ''}} {{answered ? (opt.correct ? 'correct-answer' : (opt.selected && !opt.correct ? 'wrong-answer' : '')) : ''}}"
+              wx:for="{{displayOptions}}" wx:key="index"
+              bindtap="selectOption" data-index="{{index}}">
+          {{opt.label}} {{opt.text}}
+        </view>
+      </block>
+
+      <!-- 填空/应用 -->
+      <block wx:if="{{question.type === 'fillblank' || question.type === 'essay'}}">
+        <input class="text-input" value="{{textAnswer}}" bindinput="onTextAnswer"
+               placeholder="请输入答案" wx:if="{{!answered}}"/>
+        <button class="btn-primary btn-full" bindtap="submitText" wx:if="{{!answered}}">提交答案</button>
+      </block>
+
+      <!-- 反馈 -->
+      <view wx:if="{{answered}}" class="feedback-{{isCorrect ? 'correct' : 'wrong'}}">
+        <text>{{isCorrect ? '✅ 回答正确！' : '❌ 回答错误！'}}</text>
+        <text>正确答案：{{correctAnswer}}</text>
+      </view>
+    </view>
+
+    <!-- 导航 -->
+    <view class="nav-btns">
+      <button class="btn-outline" bindtap="prevQ" disabled="{{current === 1}}">⬅ 上一题</button>
+      <button wx:if="{{answered && current < total}}" class="btn-primary" bindtap="nextQ">下一题 ➡</button>
+      <button wx:if="{{answered && current === total}}" class="btn-success" bindtap="finishQuiz">🎯 查看成绩</button>
+    </view>
+  </block>
+
+  <!-- 成绩弹窗 -->
+  <view class="modal" wx:if="{{showResult}}">
+    <view class="modal-content">
+      <view class="score-circle {{grade}}">
+        <text class="big">{{score}}</text>
+        <text class="small">/ {{totalPoints}}分</text>
+      </view>
+      <text class="grade-text">{{gradeText}} · {{percent}}%</text>
+      <view class="result-detail">
+        <text>✅ 答对 {{correctCount}} 题</text>
+        <text>❌ 答错 {{wrongCount}} 题</text>
+      </view>
+      <button class="btn-primary" bindtap="newQuiz">📝 新一轮</button>
+    </view>
+  </view>
+</view>

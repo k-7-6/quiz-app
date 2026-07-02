@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="刷题小程序 - 支持单选、多选、判断、填空、应用题，自定义分区和分值。支持Windows、Android、iOS、macOS全平台。">
+<title>刷题小程序 - 全平台下载</title>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#4f46e5">
+<style>
+/* ============================================ */
+/* RESET & VARIABLES                            */
+/* ============================================ */
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #3730a3;
+  --primary-light: #818cf8;
+  --primary-bg: #eef2ff;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 8px 30px rgba(0,0,0,.08);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.12);
+  --transition: 0.3s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  color:var(--gray-800);
+  background:#fff;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+img{max-width:100%}
+
+/* ============================================ */
+/* NAVBAR                                       */
+/* ============================================ */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,0,0,.06);
+  padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:64px;transition:all var(--transition);
+}
+.nav.scrolled{box-shadow:0 2px 20px rgba(0,0,0,.08)}
+.nav .logo{
+  display:flex;align-items:center;gap:10px;
+  font-size:18px;font-weight:700;color:var(--gray-900);
+}
+.nav .logo .icon{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;color:#fff;
+}
+.nav .links{display:flex;gap:24px;align-items:center}
+.nav .links a{
+  font-size:14px;font-weight:500;color:var(--gray-600);
+  transition:color var(--transition);
+}
+.nav .links a:hover{color:var(--primary)}
+.nav .btn-nav{
+  padding:8px 20px;background:var(--primary);color:#fff;
+  border-radius:20px;font-size:14px;font-weight:600;
+  transition:all var(--transition);
+}
+.nav .btn-nav:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,70,229,.3)}
+.nav .menu-btn{display:none;font-size:24px;background:none;border:none;cursor:pointer;color:var(--gray-700)}
+
+/* ============================================ */
+/* HERO                                         */
+/* ============================================ */
+.hero{
+  padding:120px 24px 80px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(180deg,var(--primary-bg) 0%,#fff 100%);
+}
+.hero::before{
+  content:'';position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(99,102,241,.15) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+.hero .badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 16px;background:#fff;border:1px solid var(--gray-200);
+  border-radius:20px;font-size:13px;color:var(--gray-600);
+  margin-bottom:20px;position:relative;
+}
+.hero .badge .dot{width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{
+  font-size:clamp(32px,6vw,56px);font-weight:800;
+  letter-spacing:-1px;line-height:1.15;margin-bottom:16px;
+  position:relative;
+}
+.hero h1 span{background:linear-gradient(135deg,var(--primary),var(--primary-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero .subtitle{
+  font-size:18px;color:var(--gray-500);max-width:500px;
+  margin:0 auto 32px;position:relative;
+}
+.hero .cta-group{
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;border-radius:50px;
+  font-size:16px;font-weight:600;cursor:pointer;
+  transition:all var(--transition);border:none;
+}
+.btn-primary{
+  background:var(--primary);color:#fff;
+  box-shadow:0 4px 20px rgba(79,70,229,.35);
+}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,70,229,.45)}
+.btn-outline{
+  background:#fff;color:var(--gray-700);
+  border:1.5px solid var(--gray-300);
+}
+.btn-outline:hover{background:var(--gray-50);border-color:var(--gray-400);transform:translateY(-2px)}
+.hero .mockup{
+  margin-top:48px;position:relative;
+  max-width:900px;margin-left:auto;margin-right:auto;
+}
+.hero .mockup img,.hero .mockup svg{border-radius:var(--radius);box-shadow:var(--shadow-lg)}
+
+/* ============================================ */
+/* OS DETECTION BANNER                          */
+/* ============================================ */
+.os-banner{
+  max-width:700px;margin:-30px auto 40px;
+  background:#fff;border-radius:var(--radius);
+  padding:20px 28px;box-shadow:var(--shadow-md);
+  display:flex;align-items:center;gap:16px;
+  flex-wrap:wrap;position:relative;z-index:10;
+}
+.os-banner .os-icon{
+  font-size:40px;flex-shrink:0;
+}
+.os-banner .os-info{flex:1;min-width:200px}
+.os-banner .os-name{font-size:20px;font-weight:700}
+.os-banner .os-ver{font-size:13px;color:var(--gray-500)}
+.os-banner .btn{margin-left:auto;flex-shrink:0}
+
+/* ============================================ */
+/* FEATURES GRID                                */
+/* ============================================ */
+.section{padding:80px 24px}
+.section h2{text-align:center;font-size:clamp(24px,4vw,36px);font-weight:700;margin-bottom:12px}
+.section .section-sub{text-align:center;color:var(--gray-500);margin-bottom:48px;font-size:16px}
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;max-width:1100px;margin:0 auto;
+}
+.feature-card{
+  background:#fff;border:1px solid var(--gray-200);
+  border-radius:var(--radius);padding:28px 24px;
+  transition:all var(--transition);
+}
+.feature-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:transparent}
+.feature-card .f-icon{
+  width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;margin-bottom:16px;
+}
+.feature-card h4{font-size:18px;font-weight:700;margin-bottom:8px}
+.feature-card p{font-size:14px;color:var(--gray-500);line-height:1.6}
+
+/* ============================================ */
+/* PLATFORM DOWNLOAD CARDS                      */
+/* ============================================ */
+.download-section{background:var(--gray-50)}
+.platform-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:20px;max-width:1100px;margin:0 auto;
+}
+.platform-card{
+  background:#fff;border-radius:var(--radius);
+  padding:32px 24px;text-align:center;
+  border:2px solid transparent;transition:all var(--transition);
+  position:relative;overflow:hidden;
+}
+.platform-card:hover{border-color:var(--primary-light);box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.platform-card.recommended{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-bg)}
+.platform-card.recommended::after{
+  content:'推荐';position:absolute;top:16px;right:-30px;
+  background:var(--primary);color:#fff;font-size:11px;font-weight:700;
+  padding:4px 36px;transform:rotate(45deg);
+}
+.platform-card .p-icon{
+  font-size:48px;margin-bottom:12px;
+}
+.platform-card h4{font-size:20px;font-weight:700;margin-bottom:4px}
+.platform-card .p-ver{font-size:13px;color:var(--gray-500);margin-bottom:16px}
+.platform-card .p-features{
+  text-align:left;font-size:13px;color:var(--gray-600);
+  margin-bottom:20px;
+}
+.platform-card .p-features div{
+  padding:4px 0;display:flex;align-items:center;gap:6px;
+}
+.platform-card .p-features div::before{content:'✅';font-size:12px}
+.platform-card .btn{width:100%;justify-content:center}
+.platform-card .p-size{font-size:12px;color:var(--gray-400);margin-top:8px}
+
+/* ============================================ */
+/* QR CODE SECTION                              */
+/* ============================================ */
+.qr-section{background:#fff}
+.qr-flex{
+  display:flex;align-items:center;gap:40px;
+  max-width:800px;margin:0 auto;flex-wrap:wrap;justify-content:center;
+}
+.qr-box{
+  background:#fff;padding:16px;border-radius:var(--radius);
+  box-shadow:var(--shadow);display:inline-block;
+}
+.qr-box canvas,.qr-box img{display:block}
+.qr-text{text-align:center;margin-top:50px;flex:1;min-width:280px}
+.qr-text h3{font-size:24px;font-weight:700;margin-bottom:12px}
+.qr-text p{color:var(--gray-500);margin-bottom:20px;font-size:14px;line-height:1.6}
+.qr-text .steps{text-align:left}
+.qr-text .step{
+  display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;
+}
+.qr-text .step-num{
+  width:26px;height:26px;min-width:26px;
+  background:var(--primary);color:#fff;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;
+}
+.qr-text .step span{font-size:14px;color:var(--gray-700)}
+
+/* ============================================ */
+/* STATS                                        */
+/* ============================================ */
+.stats-bar{
+  display:flex;justify-content:center;gap:48px;flex-wrap:wrap;
+  max-width:800px;margin:0 auto;padding:48px 0;
+}
+.stat{text-align:center}
+.stat .num{font-size:40px;font-weight:800;color:var(--primary)}
+.stat .label{font-size:14px;color:var(--gray-500);margin-top:4px}
+
+/* ============================================ */
+/* FAQ                                          */
+/* ============================================ */
+.faq-list{max-width:700px;margin:0 auto}
+.faq-item{
+  background:#fff;border:1px solid var(--gray-200);
+  border-radius:var(--radius-sm);padding:20px 24px;margin-bottom:12px;
+  cursor:pointer;transition:all var(--transition);
+}
+.faq-item:hover{border-color:var(--primary-light)}
+.faq-item h4{font-size:16px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.faq-item .arrow{transition:transform var(--transition);font-size:14px;color:var(--gray-400)}
+.faq-item.open .arrow{transform:rotate(180deg);color:var(--primary)}
+.faq-item .answer{font-size:14px;color:var(--gray-600);margin-top:12px;display:none;line-height:1.6}
+.faq-item.open .answer{display:block}
+
+/* ============================================ */
+/* FOOTER                                       */
+/* ============================================ */
+.footer{
+  text-align:center;padding:40px 24px;
+  color:var(--gray-400);font-size:13px;
+  border-top:1px solid var(--gray-200);
+}
+.footer a{color:var(--primary);font-weight:500}
+.footer a:hover{text-decoration:underline}
+
+/* ============================================ */
+/* TOAST                                        */
+/* ============================================ */
+.toast{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  background:var(--gray-900);color:#fff;padding:12px 24px;
+  border-radius:25px;font-size:14px;font-weight:500;
+  z-index:200;pointer-events:none;
+  animation:toastIn .4s ease;
+  box-shadow:var(--shadow-lg);
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* ============================================ */
+/* RESPONSIVE                                   */
+/* ============================================ */
+@media(max-width:768px){
+  .nav .links{display:none}
+  .nav .menu-btn{display:block}
+  .nav .links.open{
+    display:flex;flex-direction:column;
+    position:absolute;top:64px;left:0;right:0;
+    background:#fff;padding:16px 24px;
+    border-bottom:1px solid var(--gray-200);
+    box-shadow:var(--shadow-md);
+  }
+  .hero{padding:100px 20px 60px}
+  .hero h1{font-size:28px}
+  .stats-bar{gap:24px}
+  .stat .num{font-size:28px}
+  .os-banner{flex-direction:column;text-align:center;margin-left:20px;margin-right:20px}
+  .os-banner .btn{width:100%}
+  .qr-flex{flex-direction:column}
+  .section{padding:48px 16px}
+}
+@media(min-width:1200px){
+  .hero .mockup{max-width:1000px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- NAVBAR                                       -->
+<!-- ============================================ -->
+<nav class="nav" id="nav">
+  <div class="logo">
+    <img src="favicon.png" alt="刷题小程序" style="width:36px;height:36px;border-radius:10px">
+    刷题小程序
+  </div>
+  <div class="links" id="nav-links">
+    <a href="#features">功能</a>
+    <a href="#download">下载</a>
+    <a href="#faq">常见问题</a>
+    <a href="#download" class="btn-nav">立即下载</a>
+  </div>
+  <button class="menu-btn" onclick="toggleMenu()">☰</button>
+</nav>
+
+<!-- ============================================ -->
+<!-- HERO                                         -->
+<!-- ============================================ -->
+<section class="hero" id="hero">
+  <div class="badge">
+    <span class="dot"></span> 全新版本 · 全平台支持
+  </div>
+  <h1>
+    高效<span>刷题</span>，<br>随时随地
+  </h1>
+  <p class="subtitle">
+    支持单选·多选·判断·填空·应用题，自定义分区和分值，让学习更高效
+  </p>
+  <div class="cta-group">
+    <a href="#download" class="btn btn-primary" id="hero-cta">
+      ⬇️ 立即下载
+    </a>
+    <a href="#features" class="btn btn-outline">
+      📋 了解更多
+    </a>
+  </div>
+  <!-- App mockup -->
+  <div class="mockup">
+    <svg viewBox="0 0 900 500" style="width:100%;height:auto;max-width:900px">
+      <defs>
+        <linearGradient id="mock-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff"/>
+          <stop offset="100%" stop-color="#f3f4f6"/>
+        </linearGradient>
+        <filter id="mock-shadow"><feDropShadow dx="0" dy="4" stdDeviation="12" flood-opacity=".1"/></filter>
+      </defs>
+      <!-- Desktop mockup -->
+      <rect x="30" y="20" width="520" height="380" rx="12" fill="url(#mock-bg)" filter="url(#mock-shadow)"/>
+      <rect x="30" y="20" width="520" height="40" rx="12" fill="#fff"/>
+      <rect x="30" y="48" width="520" height="2" fill="#f3f4f6"/>
+      <!-- Sidebar -->
+      <rect x="38" y="56" width="120" height="336" rx="6" fill="#fff"/>
+      <rect x="46" y="66" width="104" height="8" rx="4" fill="#4f46e5" opacity=".8"/>
+      <rect x="46" y="82" width="80" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="46" y="96" width="95" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="46" y="114" width="56" height="6" rx="3" fill="#e5e7eb"/>
+      <rect x="46" y="128" width="72" height="6" rx="3" fill="#e5e7eb"/>
+      <!-- Main area -->
+      <rect x="170" y="64" width="180" height="8" rx="4" fill="#1f2937"/>
+      <rect x="170" y="84" width="370" height="6" rx="3" fill="#e5e7eb"/>
+      <!-- Question cards -->
+      <rect x="170" y="104" width="370" height="55" rx="8" fill="#fff" filter="url(#mock-shadow)"/>
+      <rect x="182" y="114" width="280" height="6" rx="3" fill="#374151"/>
+      <rect x="182" y="128" width="50" height="5" rx="2.5" fill="#6366f1"/>
+      <rect x="238" y="128" width="50" height="5" rx="2.5" fill="#6366f1"/>
+      <rect x="294" y="128" width="50" height="5" rx="2.5" fill="#6366f1"/>
+      <circle cx="530" cy="124" r="8" fill="#10b981"/>
+
+      <rect x="170" y="172" width="370" height="55" rx="8" fill="#fff" filter="url(#mock-shadow)"/>
+      <rect x="182" y="182" width="300" height="6" rx="3" fill="#374151"/>
+      <rect x="182" y="196" width="50" height="5" rx="2.5" fill="#f59e0b"/>
+      <rect x="238" y="196" width="50" height="5" rx="2.5" fill="#f59e0b"/>
+      <circle cx="530" cy="192" r="8" fill="#10b981"/>
+
+      <rect x="170" y="240" width="370" height="55" rx="8" fill="#fff" filter="url(#mock-shadow)"/>
+      <rect x="182" y="250" width="250" height="6" rx="3" fill="#374151"/>
+      <rect x="182" y="264" width="50" height="5" rx="2.5" fill="#10b981"/>
+      <circle cx="530" cy="260" r="8" fill="#10b981"/>
+
+      <!-- Points label -->
+      <rect x="170" y="315" width="60" height="20" rx="10" fill="#eef2ff"/>
+      <rect x="178" y="321" width="44" height="8" rx="4" fill="#4f46e5"/>
+
+      <!-- Phone mockup -->
+      <rect x="610" y="50" width="240" height="340" rx="24" fill="#f9fafb" filter="url(#mock-shadow)"/>
+      <rect x="620" y="60" width="220" height="320" rx="18" fill="#fff"/>
+      <!-- Phone top bar -->
+      <rect x="640" y="72" width="80" height="6" rx="3" fill="#1f2937"/>
+      <!-- Phone quiz question -->
+      <rect x="640" y="90" width="180" height="10" rx="5" fill="#1f2937"/>
+      <rect x="640" y="108" width="120" height="6" rx="3" fill="#9ca3af"/>
+      <!-- Options -->
+      <rect x="640" y="130" width="180" height="30" rx="8" fill="#f3f4f6"/>
+      <rect x="640" y="168" width="180" height="30" rx="8" fill="#f3f4f6"/>
+      <rect x="640" y="206" width="180" height="30" rx="8" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+      <rect x="640" y="244" width="180" height="30" rx="8" fill="#f3f4f6"/>
+      <!-- Correct feedback -->
+      <rect x="640" y="290" width="180" height="40" rx="8" fill="#dcfce7"/>
+      <circle cx="660" cy="310" r="10" fill="#16a34a"/>
+      <!-- Bottom nav -->
+      <rect x="640" y="348" width="180" height="20" rx="10" fill="#f3f4f6"/>
+      <rect x="660" y="353" width="30" height="10" rx="5" fill="#4f46e5"/>
+      <rect x="710" y="353" width="30" height="10" rx="5" fill="#d1d5db"/>
+      <rect x="760" y="353" width="30" height="10" rx="5" fill="#d1d5db"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- OS DETECTION BANNER                          -->
+<!-- ============================================ -->
+<div class="os-banner" id="os-banner" style="display:none">
+  <div class="os-icon" id="os-icon">💻</div>
+  <div class="os-info">
+    <div class="os-name" id="os-name">检测到您的系统</div>
+    <div class="os-ver" id="os-ver"></div>
+  </div>
+  <a href="#" class="btn btn-primary" id="os-download-btn">⬇️ 下载对应版本</a>
+</div>
+
+<!-- ============================================ -->
+<!-- FEATURES                                     -->
+<!-- ============================================ -->
+<section class="section" id="features">
+  <h2>✨ 强大功能</h2>
+  <p class="section-sub">专为高效刷题设计，覆盖所有学习场景</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="f-icon" style="background:#eef2ff">📝</div>
+      <h4>五大题型支持</h4>
+      <p>单选题、多选题、判断题、填空题、应用题，一网打尽所有考试题型</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon" style="background:#fef3c7">📁</div>
+      <h4>智能分区管理</h4>
+      <p>按单元/章节自定义分区，新建、重命名、删除，轻松管理海量题目</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon" style="background:#dcfce7">🎯</div>
+      <h4>即时反馈系统</h4>
+      <p>选对弹绿色 ✅，选错弹红色 ❌ 并自动显示正确答案和解析</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon" style="background:#fce7f3">⭐</div>
+      <h4>自定义分值</h4>
+      <p>每道题独立设置分值，刷完自动计算总分和正确率，像真实考试</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon" style="background:#e0e7ff">📥</div>
+      <h4>智能批量导入</h4>
+      <p>支持粘贴文本、上传Word(.docx)和Excel(.xlsx)，自动识别题目格式</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon" style="background:#d1fae5">📊</div>
+      <h4>学习统计分析</h4>
+      <p>自动记录每次刷题成绩，正确率趋势一目了然，进步看得见</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon" style="background:#f3e8ff">📱</div>
+      <h4>全平台支持</h4>
+      <p>Windows桌面应用 + 手机PWA，一处编写处处运行，数据本地存储安全可靠</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon" style="background:#ffedd5">🔒</div>
+      <h4>离线可用</h4>
+      <p>本地存储，无需网络即可刷题。数据不上传服务器，隐私安全有保障</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- PLATFORM DOWNLOADS                           -->
+<!-- ============================================ -->
+<section class="section download-section" id="download">
+  <h2>📥 选择你的平台</h2>
+  <p class="section-sub">支持 Windows · Android · iOS · macOS</p>
+  <div class="platform-grid">
+    <!-- Windows -->
+    <div class="platform-card recommended" id="card-windows">
+      <div class="p-icon">🪟</div>
+      <h4>Windows</h4>
+      <p class="p-ver">Windows 10/11 · v2.0</p>
+      <div class="p-features">
+        <div>桌面独立应用 (.exe)</div>
+        <div>无需安装浏览器</div>
+        <div>原生窗口体验</div>
+        <div>支持键盘快捷键</div>
+      </div>
+      <a href="downloads/刷题小程序-轻量版.html" class="btn btn-primary" download onclick="trackDownload('windows')">
+        ⬇️ 下载 Windows 版
+      </a>
+      <p class="p-size">轻量版 ~84KB | 完整版见D盘</p>
+    </div>
+
+    <!-- Android -->
+    <div class="platform-card" id="card-android">
+      <div class="p-icon">🤖</div>
+      <h4>Android</h4>
+      <p class="p-ver">Android 8.0+ · PWA</p>
+      <div class="p-features">
+        <div>PWA 渐进式应用</div>
+        <div>安装到主屏幕</div>
+        <div>离线可用</div>
+        <div>不占存储空间</div>
+      </div>
+      <a href="#qr-guide" class="btn btn-outline" onclick="trackDownload('android')">
+        📱 查看安装教程
+      </a>
+      <p class="p-size">通过浏览器安装 · 免费</p>
+    </div>
+
+    <!-- iOS -->
+    <div class="platform-card" id="card-ios">
+      <div class="p-icon">🍎</div>
+      <h4>iOS / iPadOS</h4>
+      <p class="p-ver">iOS 14+ · PWA</p>
+      <div class="p-features">
+        <div>PWA 渐进式应用</div>
+        <div>添加到主屏幕</div>
+        <div>Safari 浏览器安装</div>
+        <div>App Store 无需审核</div>
+      </div>
+      <a href="#qr-guide" class="btn btn-outline" onclick="trackDownload('ios')">
+        📱 查看安装教程
+      </a>
+      <p class="p-size">通过 Safari 安装 · 免费</p>
+    </div>
+
+    <!-- macOS -->
+    <div class="platform-card" id="card-macos">
+      <div class="p-icon">💻</div>
+      <h4>macOS</h4>
+      <p class="p-ver">macOS 12+ · PWA</p>
+      <div class="p-features">
+        <div>PWA 渐进式应用</div>
+        <div>Dock 快捷启动</div>
+        <div>支持 Touch ID</div>
+        <div>原生体验</div>
+      </div>
+      <a href="downloads/刷题小程序-轻量版.html" class="btn btn-outline" download onclick="trackDownload('macos')">
+        ⬇️ 下载 Web 版
+      </a>
+      <p class="p-size">HTML文件 · ~84KB</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- QR CODE GUIDE                                -->
+<!-- ============================================ -->
+<section class="section qr-section" id="qr-guide">
+  <h2>📱 手机扫码安装</h2>
+  <p class="section-sub">无需下载应用商店，浏览器打开即可安装</p>
+  <div class="qr-flex">
+    <div class="qr-box" id="qrcode-container">
+      <!-- QR code will be generated here -->
+    </div>
+    <div class="qr-text">
+      <h3>三步安装到手机</h3>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">1</span>
+          <span>用手机浏览器<strong>扫描左侧二维码</strong>（需与电脑同一WiFi下运行服务器）</span>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <span>打开后，点击浏览器<strong>分享/菜单按钮</strong></span>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <span>选择<strong>「添加到主屏幕」</strong>，安装完成！</span>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--gray-400);margin-top:16px">
+        💡 打开 D:\刷题小程序-手机版\启动.bat 启动服务器后可扫码
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- INSTALL GUIDE PER PLATFORM                   -->
+<!-- ============================================ -->
+<section class="section" style="background:var(--gray-50)">
+  <h2>📖 各平台安装指南</h2>
+  <p class="section-sub">图文详解，轻松上手</p>
+  <div class="platform-grid">
+    <div class="platform-card">
+      <div class="p-icon">🪟</div>
+      <h4>Windows 安装</h4>
+      <div class="p-features">
+        <div>下载 .exe 文件</div>
+        <div>双击运行即可</div>
+        <div>或下载 HTML 版用浏览器打开</div>
+        <div>建议固定到任务栏</div>
+      </div>
+    </div>
+    <div class="platform-card">
+      <div class="p-icon">🤖</div>
+      <h4>Android 安装</h4>
+      <div class="p-features">
+        <div>Chrome 打开网页</div>
+        <div>点击右上角 ⋮ 菜单</div>
+        <div>选择「添加到主屏幕」</div>
+        <div>或点击「安装应用」</div>
+      </div>
+    </div>
+    <div class="platform-card">
+      <div class="p-icon">🍎</div>
+      <h4>iPhone/iPad 安装</h4>
+      <div class="p-features">
+        <div>Safari 打开网页</div>
+        <div>点击底部 ↑ 分享按钮</div>
+        <div>滑动找到「添加到主屏幕」</div>
+        <div>点击右上角「添加」</div>
+      </div>
+    </div>
+    <div class="platform-card">
+      <div class="p-icon">💻</div>
+      <h4>macOS 安装</h4>
+      <div class="p-features">
+        <div>Chrome/Safari 打开网页</div>
+        <div>地址栏右侧出现 + 图标</div>
+        <div>点击安装为 PWA 应用</div>
+        <div>在 Launchpad 中打开</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- STATS                                        -->
+<!-- ============================================ -->
+<section class="section">
+  <div class="stats-bar">
+    <div class="stat"><div class="num">5</div><div class="label">种题型</div></div>
+    <div class="stat"><div class="num">4</div><div class="label">个平台</div></div>
+    <div class="stat"><div class="num">∞</div><div class="label">道题目</div></div>
+    <div class="stat"><div class="num">100%</div><div class="label">免费</div></div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FAQ                                          -->
+<!-- ============================================ -->
+<section class="section" style="background:var(--gray-50)" id="faq">
+  <h2>❓ 常见问题</h2>
+  <p class="section-sub">你可能想知道的事情</p>
+  <div class="faq-list">
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <h4>数据存储在哪里？<span class="arrow">▾</span></h4>
+      <div class="answer">所有数据保存在你设备的本地存储中（浏览器 localStorage），不会上传到任何服务器。你可以随时使用「导出数据」功能备份为 JSON 文件。</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <h4>可以离线使用吗？<span class="arrow">▾</span></h4>
+      <div class="answer">可以！安装为 PWA 后，应用会缓存到本地，即使没有网络也能正常刷题。Word/Excel 导入功能需要初次联网加载解析库。</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <h4>手机和电脑数据能同步吗？<span class="arrow">▾</span></h4>
+      <div class="answer">目前数据保存在各自设备本地。你可以用「导出数据」和「导入备份」功能，在设备间手动转移数据。后续会考虑添加云同步功能。</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <h4>怎么批量导入题目？<span class="arrow">▾</span></h4>
+      <div class="answer">支持三种方式：①粘贴文本（自动识别格式）；②上传 Word .docx 文件；③上传 Excel .xlsx 文件。点击分区页面的「📥 导入」按钮即可。</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <h4>要钱吗？有广告吗？<span class="arrow">▾</span></h4>
+      <div class="answer">完全免费！没有任何广告，没有任何内购，所有功能永久免费使用。这是一个开源的个人学习工具。</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <h4>Windows 完整版和轻量版有什么区别？<span class="arrow">▾</span></h4>
+      <div class="answer">完整版是独立 .exe 应用（~269MB），自带运行环境，双击即用。轻量版是单个 HTML 文件（~84KB），需要用浏览器打开，功能完全一致。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- FOOTER                                       -->
+<!-- ============================================ -->
+<footer class="footer">
+  <p>© 2026 <a href="#">刷题小程序</a> · 全平台免费 · 数据本地存储 · 隐私安全</p>
+  <p style="margin-top:8px">
+    <a href="#hero">首页</a> ·
+    <a href="#features">功能</a> ·
+    <a href="#download">下载</a> ·
+    <a href="#faq">常见问题</a>
+  </p>
+</footer>
+
+<!-- Toast -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js">
+</script>
+<script>
+// ==============================================
+// OS Detection
+// ==============================================
+function detectOS() {
+  const ua = navigator.userAgent || navigator.vendor || window.opera;
+  if (/windows/i.test(ua)) return { name: 'Windows', icon: '🪟', id: 'windows', ver: 'Windows 10/11 · v2.0', download: 'downloads/刷题小程序-轻量版.html', btn: '⬇️ 下载 Windows 版' };
+  if (/android/i.test(ua)) return { name: 'Android', icon: '🤖', id: 'android', ver: 'Android · PWA 安装', download: '#qr-guide', btn: '📱 查看安装教程' };
+  if (/ipad|iphone|ipod/i.test(ua)) return { name: 'iOS', icon: '🍎', id: 'ios', ver: 'iOS/iPadOS · PWA 安装', download: '#qr-guide', btn: '📱 查看安装教程' };
+  if (/macintosh|mac os x/i.test(ua)) return { name: 'macOS', icon: '💻', id: 'macos', ver: 'macOS · PWA 安装', download: 'downloads/刷题小程序-轻量版.html', btn: '⬇️ 下载 macOS 版' };
+  return { name: '', icon: '🌐', id: '', ver: '选择你的平台', download: '#download', btn: '查看所有版本' };
+}
+
+const os = detectOS();
+if (os.name) {
+  const banner = document.getElementById('os-banner');
+  banner.style.display = 'flex';
+  document.getElementById('os-icon').textContent = os.icon;
+  document.getElementById('os-name').textContent = '检测到您使用 ' + os.name;
+  document.getElementById('os-ver').textContent = os.ver;
+  const btn = document.getElementById('os-download-btn');
+  btn.textContent = os.btn;
+  btn.href = os.download;
+  // Highlight relevant card
+  document.querySelectorAll('.platform-card').forEach(c => c.classList.remove('recommended'));
+  const card = document.getElementById('card-' + os.id);
+  if (card) card.classList.add('recommended');
+  // Update hero CTA
+  document.getElementById('hero-cta').href = os.download;
+}
+
+// ==============================================
+// QR Code
+// ==============================================
+function generateQR() {
+  const container = document.getElementById('qrcode-container');
+  // Use a demo URL; in production this would be the actual hosted URL
+  const demoUrl = 'https://quiz-app.example.com';
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(container, {
+      text: demoUrl,
+      width: 200,
+      height: 200,
+      colorDark: '#1f2937',
+      colorLight: '#ffffff'
+    });
+  } else {
+    container.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
+      encodeURIComponent(demoUrl) + '" alt="QR Code" style="display:block;border-radius:12px">';
+  }
+  // Add a note below QR
+  const note = document.createElement('p');
+  note.style.cssText = 'text-align:center;font-size:12px;color:#9ca3af;margin-top:8px';
+  note.textContent = '服务器启动后可扫码';
+  container.appendChild(note);
+}
+setTimeout(generateQR, 500);
+
+// ==============================================
+// Navigation
+// ==============================================
+function toggleMenu() {
+  document.getElementById('nav-links').classList.toggle('open');
+}
+
+// Nav scroll effect
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 10);
+});
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', function(e) {
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('nav-links').classList.remove('open');
+    }
+  });
+});
+
+// ==============================================
+// Download tracking
+// ==============================================
+function trackDownload(platform) {
+  showToast('✅ 开始下载 ' + platform + ' 版本！');
+  // Could add analytics here
+}
+
+// ==============================================
+// Toast
+// ==============================================
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 2500);
+}
+
+// ==============================================
+// FAQ accordion (first item open by default)
+// ==============================================
+document.querySelector('.faq-item')?.classList.add('open');
+</script>
+</body>
+</html>

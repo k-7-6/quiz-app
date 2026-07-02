@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#6366f1"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bg)"/>
+  <!-- Clipboard icon -->
+  <g transform="translate(156, 100)" fill="none" stroke="#fff" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Clipboard body -->
+    <rect x="0" y="40" width="200" height="260" rx="20" ry="20"/>
+    <!-- Clip -->
+    <rect x="70" y="0" width="60" height="60" rx="10" ry="10"/>
+    <!-- Check mark -->
+    <polyline points="50,170 90,210 150,130"/>
+    <!-- Lines -->
+    <line x1="50" y1="260" x2="150" y2="260"/>
+    <line x1="50" y1="300" x2="120" y2="300"/>
+  </g>
+</svg>

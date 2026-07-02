@@ -1,0 +1,28 @@
+{
+  "appId": "com.quiz.practice",
+  "appName": "刷题小程序",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1000,
+      "backgroundColor": "#4f46e5",
+      "showSpinner": false
+    },
+    "App": {
+      "appName": "刷题小程序"
+    }
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true
+  },
+  "ios": {
+    "contentInset": "always",
+    "allowsLinkPreview": false
+  }
+}

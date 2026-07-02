@@ -1,0 +1,50 @@
+<!-- 题库首页 -->
+<view class="container">
+  <!-- 分区选择器 -->
+  <scroll-view class="section-bar" scroll-x>
+    <view class="section-item {{item.id === activeSectionId ? 'active' : ''}}"
+          wx:for="{{sections}}" wx:key="id"
+          bindtap="selectSection" data-id="{{item.id}}">
+      📁 {{item.name}}
+      <text class="count">{{questionCount[item.id] || 0}}</text>
+    </view>
+  </scroll-view>
+
+  <!-- 搜索和操作 -->
+  <view class="toolbar">
+    <input class="search-input" placeholder="🔍 搜索题目..." value="{{searchText}}"
+           bindinput="onSearch" confirm-type="search"/>
+    <button class="btn-import" bindtap="showImport">📥 导入</button>
+    <button class="btn-primary btn-sm" bindtap="showAdd">+ 添加</button>
+  </view>
+
+  <!-- 题目列表 -->
+  <block wx:if="{{filteredQuestions.length > 0}}">
+    <view class="card question-card type-{{item.type}}"
+          wx:for="{{filteredQuestions}}" wx:key="id">
+      <view class="q-header">
+        <text class="q-title">{{index + 1}}. {{item.title}}</text>
+        <text class="type-tag type-{{item.type}}">{{typeLabels[item.type]}}</text>
+      </view>
+      <view class="q-options" wx:if="{{item.options.length > 0}}">
+        <text class="opt" wx:for="{{item.options}}" wx:key="*this" wx:for-item="opt">
+          {{opt}}
+        </text>
+      </view>
+      <view class="q-footer">
+        <text>答案：{{item.answer}}</text>
+        <text>{{item.points}}分</text>
+        <view class="q-actions">
+          <text bindtap="editQ" data-id="{{item.id}}">✏️</text>
+          <text bindtap="deleteQ" data-id="{{item.id}}">🗑️</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <view wx:else class="empty-state">
+    <text class="icon">📝</text>
+    <text>此分区还没有题目</text>
+    <button class="btn-primary" bindtap="showAdd">添加第一道题目</button>
+  </view>
+</view>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Icon Generator</title></head>
+<body>
+<canvas id="c" width="512" height="512"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function drawIcon(size) {
+  canvas.width = size; canvas.height = size;
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, size, size);
+  grad.addColorStop(0, '#4f46e5');
+  grad.addColorStop(1, '#6366f1');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.roundRect(0, 0, size, size, size*0.1); ctx.fill();
+
+  // White clipboard icon
+  const s = size / 512; // scale factor
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 20 * s;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Clipboard body
+  const bx = 156 * s, by = 140 * s, bw = 200 * s, bh = 260 * s;
+  ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, 20 * s); ctx.stroke();
+
+  // Clip top
+  ctx.beginPath(); ctx.roundRect((156+70)*s, 100*s, 60*s, 60*s, 10*s); ctx.stroke();
+
+  // Check mark
+  ctx.beginPath();
+  ctx.moveTo((156+50)*s, (140+130)*s);
+  ctx.lineTo((156+90)*s, (140+170)*s);
+  ctx.lineTo((156+150)*s, (140+90)*s);
+  ctx.stroke();
+
+  // Lines
+  ctx.beginPath(); ctx.moveTo((156+50)*s, (140+220)*s); ctx.lineTo((156+150)*s, (140+220)*s); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo((156+50)*s, (140+260)*s); ctx.lineTo((156+120)*s, (140+260)*s); ctx.stroke();
+
+  return canvas.toDataURL('image/png');
+}
+
+// Generate and download
+function download(url, name) {
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+}
+
+// Draw all sizes
+console.log('Generating icons...');
+setTimeout(() => {
+  download(drawIcon(192), 'icon-192.png');
+  setTimeout(() => {
+    download(drawIcon(512), 'icon-512.png');
+    console.log('Done! Check your downloads folder.');
+  }, 500);
+}, 500);
+</script>
+<p>Icon generator loaded. PNGs should download automatically.</p>
+<p>If not, <button onclick="download(drawIcon(192),'icon-192.png')">Download 192px</button>
+<button onclick="download(drawIcon(512),'icon-512.png')">Download 512px</button></p>
+</body></html>

@@ -1,0 +1,5 @@
+.container { padding: 20rpx; }
+.stat-row { display: flex; gap: 20rpx; margin-bottom: 20rpx; }
+.stat-card { flex: 1; background: #fff; border-radius: 16rpx; padding: 32rpx; text-align: center; }
+.big-num { font-size: 56rpx; font-weight: 800; color: #4f46e5; display: block; }
+.history-item { display: flex; justify-content: space-between; padding: 12rpx 0; border-bottom: 1rpx solid #f3f4f6; font-size: 24rpx; }
