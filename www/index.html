@@ -138,6 +138,35 @@ select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:u
 }
 #app-header .header-btn:hover{background:var(--gray-200)}
 
+/* PWA Install Banner */
+#install-banner{
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  padding:10px 12px;flex-shrink:0;
+  animation:slideDown .3s ease;
+}
+@keyframes slideDown{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.install-banner-inner{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.15);border-radius:12px;
+  padding:8px 12px;
+}
+.install-icon{width:40px;height:40px;border-radius:10px;flex-shrink:0}
+.install-text{flex:1;min-width:0}
+.install-text strong{display:block;color:#fff;font-size:14px;font-weight:700}
+.install-text span{display:block;color:rgba(255,255,255,.8);font-size:12px}
+.install-banner-inner .btn-primary{
+  background:#fff;color:var(--primary);padding:8px 16px;
+  font-size:14px;font-weight:700;border-radius:20px;
+  flex-shrink:0;
+}
+.install-close{
+  background:none;border:none;color:rgba(255,255,255,.7);
+  font-size:18px;padding:4px;cursor:pointer;flex-shrink:0;
+}
+@media(min-width:768px){
+  #install-banner{max-width:800px;margin:0 auto;border-radius:0 0 16px 16px}
+}
+
 /* ============================================ */
 /* Main Content Area                             */
 /* ============================================ */
@@ -511,6 +540,21 @@ select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:u
 </style>
 </head>
 <body>
+
+<!-- ============================================ -->
+<!-- PWA INSTALL BANNER                            -->
+<!-- ============================================ -->
+<div id="install-banner" style="display:none">
+  <div class="install-banner-inner">
+    <img src="icons/icon-192.png" alt="" class="install-icon">
+    <div class="install-text">
+      <strong>刷题小程序</strong>
+      <span>添加到桌面，像App一样使用</span>
+    </div>
+    <button class="btn-primary" id="install-btn" onclick="App.installPWA()">📲 安装</button>
+    <button class="install-close" onclick="App.dismissInstall()">✕</button>
+  </div>
+</div>
 
 <!-- ============================================ -->
 <!-- TOP HEADER                                   -->
@@ -1658,10 +1702,44 @@ const App = {
 
   _shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; },
 
+  // PWA Install
+  _deferredPrompt: null,
+  installPWA() {
+    if (this._deferredPrompt) {
+      this._deferredPrompt.prompt();
+      this._deferredPrompt.userChoice.then(result => {
+        if (result.outcome === 'accepted') document.getElementById('install-banner').style.display = 'none';
+        this._deferredPrompt = null;
+      });
+    } else {
+      // Fallback: show instructions
+      const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+      if (isIOS) {
+        this.toast('📱 点击底部分享按钮 → 添加到主屏幕', 'info');
+      } else {
+        this.toast('📱 点击浏览器菜单 → 添加到主屏幕', 'info');
+      }
+    }
+  },
+  dismissInstall() {
+    document.getElementById('install-banner').style.display = 'none';
+  },
+
   // ============================================
   // EVENTS
   // ============================================
   _bindEvents() {
+    // PWA install prompt
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      this._deferredPrompt = e;
+      document.getElementById('install-banner').style.display = 'block';
+    });
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('install-banner').style.display = 'none';
+      this._deferredPrompt = null;
+    });
+
     document.addEventListener('keydown', e => {
       if (this.activeTab !== 'quiz' || !this.quizQuestions.length || this.quizSubmitted) return;
       const q = this.quizQuestions[this.quizIndex];

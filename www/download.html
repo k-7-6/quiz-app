@@ -534,37 +534,40 @@ img{max-width:100%}
     </div>
 
     <!-- Android -->
-    <div class="platform-card" id="card-android">
+    <div class="platform-card recommended" id="card-android">
       <div class="p-icon">🤖</div>
       <h4>Android</h4>
-      <p class="p-ver">Android 8.0+ · PWA</p>
+      <p class="p-ver">Android 8.0+</p>
       <div class="p-features">
-        <div>PWA 渐进式应用</div>
-        <div>安装到主屏幕</div>
-        <div>离线可用</div>
+        <div>📲 浏览器一键安装（PWA）</div>
+        <div>📦 或下载 APK 直接安装</div>
+        <div>离线可用 · 自动更新</div>
         <div>不占存储空间</div>
       </div>
-      <a href="#qr-guide" class="btn btn-outline" onclick="trackDownload('android')">
-        📱 查看安装教程
+      <a href="https://k-7-6.github.io/quiz-app/www/" class="btn btn-primary" onclick="trackDownload('android-pwa')">
+        📲 在线安装（推荐）
       </a>
-      <p class="p-size">通过浏览器安装 · 免费</p>
+      <a href="https://github.com/k-7-6/quiz-app/releases/latest/download/app-debug.apk" class="btn btn-outline" style="margin-top:8px" onclick="trackDownload('android-apk')">
+        📦 下载 APK
+      </a>
+      <p class="p-size">PWA在线安装 · APK自动构建</p>
     </div>
 
     <!-- iOS -->
     <div class="platform-card" id="card-ios">
       <div class="p-icon">🍎</div>
       <h4>iOS / iPadOS</h4>
-      <p class="p-ver">iOS 14+ · PWA</p>
+      <p class="p-ver">iOS 14+</p>
       <div class="p-features">
-        <div>PWA 渐进式应用</div>
+        <div>📲 Safari 一键安装</div>
         <div>添加到主屏幕</div>
-        <div>Safari 浏览器安装</div>
-        <div>App Store 无需审核</div>
+        <div>离线可用</div>
+        <div>无需 App Store</div>
       </div>
-      <a href="#qr-guide" class="btn btn-outline" onclick="trackDownload('ios')">
-        📱 查看安装教程
+      <a href="https://k-7-6.github.io/quiz-app/www/" class="btn btn-primary" onclick="trackDownload('ios-pwa')">
+        📲 打开安装
       </a>
-      <p class="p-size">通过 Safari 安装 · 免费</p>
+      <p class="p-size">用 Safari 打开 → 添加到主屏幕</p>
     </div>
 
     <!-- macOS -->
