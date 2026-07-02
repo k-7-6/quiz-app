@@ -45,22 +45,25 @@ p{opacity:.85;font-size:14px;margin-bottom:24px;line-height:1.6}
   var downloadUrl = '';
 
   if (isAndroid) {
-    downloadUrl = apk;
-    title.textContent = '正在下载 Android 版';
-    msg.textContent = 'APK 下载中，下载完成后点击安装';
+    // Redirect to PWA (works better than APK)
+    downloadUrl = pwa;
+    title.textContent = '正在打开刷题小程序';
+    msg.textContent = '打开后点击顶部「安装」添加到桌面';
+    setTimeout(function(){ window.location.href = downloadUrl; }, 600);
+    spinner.style.display = 'none';
+    return;
   } else if (isIOS) {
     downloadUrl = pwa;
     title.textContent = '正在打开刷题小程序';
     msg.textContent = '打开后点底部 ↑ 分享 → 添加到主屏幕';
-    // iOS can't auto-download, redirect to PWA
-    setTimeout(function(){ window.location.href = downloadUrl; }, 800);
+    setTimeout(function(){ window.location.href = downloadUrl; }, 600);
     spinner.style.display = 'none';
     return;
   } else {
     downloadUrl = html;
     title.textContent = '正在打开刷题小程序';
     msg.textContent = '电脑端请直接用浏览器打开使用';
-    setTimeout(function(){ window.location.href = downloadUrl; }, 800);
+    setTimeout(function(){ window.location.href = downloadUrl; }, 600);
     spinner.style.display = 'none';
     return;
   }
