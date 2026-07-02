@@ -102,7 +102,7 @@ button{
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
 }
-button:active{transform:scale(.96);opacity:.85}
+button:active{opacity:.85}
 input,textarea,select{
   font-family:inherit;
   font-size:16px; /* Prevent iOS zoom on focus */
@@ -393,7 +393,7 @@ select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:u
   font-size:16px;color:var(--gray-700);
   transition:all var(--transition);
 }
-.quiz-option-m:active{transform:scale(.98)}
+.quiz-option-m:active{opacity:.9}
 .quiz-option-m.selected{border-color:var(--primary);background:var(--primary-bg);color:var(--primary);font-weight:600}
 .quiz-option-m.correct-answer{border-color:var(--success)!important;background:var(--success-bg)!important;color:var(--success)!important;font-weight:600}
 .quiz-option-m.wrong-answer{border-color:var(--danger)!important;background:var(--danger-bg)!important;color:var(--danger)!important}
@@ -952,6 +952,7 @@ const App = {
   },
 
   _renderQuizQuestion(container) {
+    if (!container) container = document.getElementById('main-content');
     const q = this.quizQuestions[this.quizIndex];
     if (!q) return;
     const total = this.quizQuestions.length;
