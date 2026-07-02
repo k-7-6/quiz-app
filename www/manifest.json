@@ -2,7 +2,7 @@
   "name": "刷题小程序",
   "short_name": "刷题",
   "description": "支持单选/多选/判断/填空/应用题，自定义分区和分值",
-  "start_url": "index.html",
+  "start_url": "app.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f9fafb",
