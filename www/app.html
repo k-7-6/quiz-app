@@ -554,12 +554,12 @@ select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:u
 <!-- ============================================ -->
 <!-- PWA INSTALL BANNER                            -->
 <!-- ============================================ -->
-<div id="install-banner" style="display:none">
+<div id="install-banner">
   <div class="install-banner-inner">
     <img src="icons/icon-192.png" alt="" class="install-icon">
     <div class="install-text">
       <strong>刷题小程序</strong>
-      <span>添加到桌面，像App一样使用</span>
+      <span id="install-hint">正在检测...</span>
     </div>
     <button class="btn-primary" id="install-btn" onclick="App.installPWA()">📲 安装</button>
     <button class="install-close" onclick="App.dismissInstall()">✕</button>
@@ -773,6 +773,7 @@ const App = {
     this._render();
     this._bindEvents();
     this._registerSW();
+    this._initInstallBanner();
   },
 
   _save() { DataManager.save(this.sections, this.questions); },
@@ -1715,22 +1716,38 @@ const App = {
 
   // PWA Install
   _deferredPrompt: null,
-  installPWA() {
-    if (this._deferredPrompt) {
-      this._deferredPrompt.prompt();
-      this._deferredPrompt.userChoice.then(result => {
-        if (result.outcome === 'accepted') document.getElementById('install-banner').style.display = 'none';
-        this._deferredPrompt = null;
-      });
+  _initInstallBanner() {
+    var ua = navigator.userAgent || '';
+    var isIOS = /iphone|ipad|ipod/.test(ua.toLowerCase());
+    var isAndroid = /android/.test(ua.toLowerCase());
+    var hint = document.getElementById('install-hint');
+    var btn = document.getElementById('install-btn');
+
+    if (isIOS) {
+      hint.textContent = '点底部 ↑ 分享 → 添加到主屏幕';
+      btn.textContent = '📱 查看教程';
+      btn.onclick = function(){ alert('1. 点底部 ↑ 分享按钮\n2. 向右滑动\n3. 点「添加到主屏幕」\n4. 点右上角「添加」'); };
+    } else if (isAndroid) {
+      hint.textContent = '点右侧按钮安装到桌面';
+      btn.textContent = '📲 安装';
+      btn.onclick = function(){
+        if (App._deferredPrompt) {
+          App._deferredPrompt.prompt();
+          App._deferredPrompt.userChoice.then(function(r){
+            if (r.outcome === 'accepted') document.getElementById('install-banner').style.display = 'none';
+            App._deferredPrompt = null;
+          });
+        } else {
+          alert('1. 点浏览器右上角 ⋮ 菜单\n2. 点「添加到主屏幕」或「安装应用」');
+        }
+      };
     } else {
-      // Fallback: show instructions
-      const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
-      if (isIOS) {
-        this.toast('📱 点击底部分享按钮 → 添加到主屏幕', 'info');
-      } else {
-        this.toast('📱 点击浏览器菜单 → 添加到主屏幕', 'info');
-      }
+      hint.textContent = '电脑端直接使用即可';
+      btn.style.display = 'none';
     }
+  },
+  installPWA() {
+    // Called from banner button
   },
   dismissInstall() {
     document.getElementById('install-banner').style.display = 'none';
@@ -1741,14 +1758,13 @@ const App = {
   // ============================================
   _bindEvents() {
     // PWA install prompt
-    window.addEventListener('beforeinstallprompt', e => {
+    window.addEventListener('beforeinstallprompt', function(e) {
       e.preventDefault();
-      this._deferredPrompt = e;
-      document.getElementById('install-banner').style.display = 'block';
+      App._deferredPrompt = e;
     });
-    window.addEventListener('appinstalled', () => {
+    window.addEventListener('appinstalled', function() {
       document.getElementById('install-banner').style.display = 'none';
-      this._deferredPrompt = null;
+      App._deferredPrompt = null;
     });
 
     document.addEventListener('keydown', e => {
