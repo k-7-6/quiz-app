@@ -14,9 +14,21 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
-<!-- External libraries for file import -->
-<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<!-- External libraries for file import (async, non-blocking) -->
+<script>
+// Load external scripts asynchronously - app works without them
+(function(){
+  var s1=document.createElement('script');
+  s1.src='https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+  s1.async=true;s1.onerror=function(){console.log('xlsx CDN unavailable');};
+  document.head.appendChild(s1);
+
+  var s2=document.createElement('script');
+  s2.src='https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+  s2.async=true;s2.onerror=function(){console.log('mammoth CDN unavailable');};
+  document.head.appendChild(s2);
+})();
+</script>
 <style>
 /* ============================================ */
 /* CSS Variables & Mobile-First Reset           */
@@ -67,8 +79,6 @@ body{
   display:flex;
   flex-direction:column;
   -webkit-tap-highlight-color:transparent;
-  -webkit-user-select:none;
-  user-select:none;
   -webkit-font-smoothing:antialiased;
 }
 input,textarea,select{
@@ -368,7 +378,7 @@ select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:u
   background:#fff;border-radius:var(--radius-lg);padding:24px 20px;
   box-shadow:var(--shadow-md);
   transition:all .3s ease;
-  touch-action:pan-y;
+  touch-action:auto;
 }
 .quiz-card-m.correct{border:2px solid var(--success);box-shadow:0 0 0 6px var(--success-bg)}
 .quiz-card-m.wrong{border:2px solid var(--danger);box-shadow:0 0 0 6px var(--danger-bg)}
@@ -1776,11 +1786,14 @@ function esc(str) {
   if (!str) return '';
   const div = document.createElement('div');
   div.textContent = str;
-  return div.innerHTML;
+  return div.innerHTML.replace(/'/g, "&#39;").replace(/"/g, '&quot;');
 }
 
-// Launch
-document.addEventListener('DOMContentLoaded', () => App.init());
+// Launch with error handling
+document.addEventListener('DOMContentLoaded', () => {
+  try { App.init(); } catch(e) { console.error('App init error:', e); }
+});
+window.onerror = function(msg, url, line) { console.log('JS Error:', msg, line); return false; };
 </script>
 </body>
 </html>
