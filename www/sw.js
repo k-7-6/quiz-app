@@ -1,7 +1,7 @@
 // Service Worker for PWA offline support
 const CACHE_NAME = 'quiz-app-v2';
 const ASSETS = [
-  'index.html',
+  'index.html','app.html',
   'manifest.json',
   'icons/icon.svg',
   'icons/icon-192.png',
